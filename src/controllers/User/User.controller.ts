@@ -25,22 +25,36 @@ export class User extends Common {
   };
 
   login = async (req: Request, res: Response): Promise<TControllerReturn> => {
-    const { login, password } = req.body;
-    const user: IUser = await Users.findOne({ login });
-    if (!user) {
-      return this.setResponse(res, 400, MESSAGES.user_not_found);
-    }
+    try {
+      const { login, password } = req.body;
+      const user: IUser = await Users.findOne({ login });
+      if (!user) {
+        return this.setResponse(res, 400, MESSAGES.user_not_found);
+      }
 
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
-      return this.setResponse(res, 401, MESSAGES.invalid_password);
+      const isPasswordMatch = await bcrypt.compare(password, user.password);
+      if (!isPasswordMatch) {
+        return this.setResponse(res, 401, MESSAGES.invalid_password);
+      }
+      const secret = process.env.TOKEN_SECRET;
+      const token = jwt.sign(
+        { userId: user._id },
+        secret,
+        { expiresIn: '10h' },
+      );
+      res.json({ token, role: user.role });
+    } catch (e) {
+      this.setResponse(res, 400, MESSAGES.abstract_err);
     }
-    const secret = process.env.TOKEN_SECRET;
-    const token = jwt.sign(
-      { userId: user._id },
-      secret,
-      { expiresIn: '10h' },
-    );
-    res.json({ token, role: user.role });
+  };
+
+  getUserData = async (req: Request, res: Response): Promise<TControllerReturn> => {
+    try {
+      const userID = req.body.userId;
+      const user = await Users.findOne({ _id: userID }, { password: false, __v: false, _id: false });
+      return this.setResponse(res, 200, user);
+    } catch (e) {
+      this.setResponse(res, 400, MESSAGES.abstract_err);
+    }
   };
 }
