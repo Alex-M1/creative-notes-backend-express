@@ -3,5 +3,6 @@ export const MESSAGES = {
   success: 'success',
   user_not_found: 'user_not_found',
   invalid_password: 'invalid_password',
+  invalid_login: 'invalid_login',
   abstract_err: 'something_wrong',
 };
