@@ -5,7 +5,7 @@ import http from 'http';
 import express from 'express';
 import { connect } from '@helpers/connect';
 import { URLS } from '@constants/urls';
-import userRoute from '@routes/auth.route';
+import userRoute from '@src/routes/user.route';
 
 config();
 
