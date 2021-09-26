@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "target": "es5", // В JS какого века компилировать
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "module": "commonjs",
+    "lib": [
+      "es6"
+    ],
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node", // Формат модулей (на входе)
+    "sourceMap": true, // Нужно ли юзать удобные для дебага source map'ы (да, нужно)
+    "baseUrl": ".", // Где сам проект находится
+    "paths": {
+      "*": [
+        "node_modules/*",
+      ],
+      "@constants/*": [
+        "./src/constants/*"
+      ],
+      "@src/*": [
+        "./src/*"
+      ],
+      "@helpers/*": [
+        "src/helpers/*"
+      ],
+      "@routes/*": [
+        "./src/routes/*"
+      ],
+      "@types/*": [
+        "./src/commonTypes/*"
+      ],
+      "@controllers/*": [
+        "./src/controllers/*"
+      ]
+    },
+  },
+  "include": [
+    "**/*.ts",
+  ], // Что именно компилировать
+  "exclude": [
+    "node_modules",
+  ],
+}
