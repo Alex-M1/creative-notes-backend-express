@@ -13,7 +13,7 @@ export class User extends Common {
     try {
       const candidate = await Users.findOne({ login });
       if (candidate) {
-        return this.setResponse(res, 409, MESSAGES.user_already_reg);
+        return this.setResponse(res, 400, MESSAGES.user_already_reg);
       }
       const hashedPassword = await bcrypt.hash(password, +process.env.SALT);
       const user = new Users({ login, password: hashedPassword });
