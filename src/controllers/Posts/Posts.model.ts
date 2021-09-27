@@ -29,4 +29,4 @@ const schema = new Schema<IPostsSchema>({
   },
 }, { collection: 'posts' });
 
-export const Users = model('Posts', schema);
+export const Post = model('Posts', schema);
