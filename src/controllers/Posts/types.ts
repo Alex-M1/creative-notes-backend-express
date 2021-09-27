@@ -17,3 +17,9 @@ export interface IPosts extends IPostsSchema {
 export interface IPostRequest extends Omit<IPostsSchema, 'author' | 'likes' | 'created_at'> {
   userId: Schema.Types.ObjectId;
 }
+
+export interface IPostsQuery {
+  theme: string;
+  page: string;
+  per_page: string;
+}
