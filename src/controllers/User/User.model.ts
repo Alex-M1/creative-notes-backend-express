@@ -1,3 +1,4 @@
+import { UsersRoles } from '@constants/users';
 import { Schema, model } from 'mongoose';
 import { IUserSchema } from './types';
 
@@ -38,7 +39,7 @@ const schema = new Schema<IUserSchema>({
   role: {
     type: String,
     required: true,
-    default: 'User',
+    default: UsersRoles.user,
   },
 }, { collection: 'users' });
 
