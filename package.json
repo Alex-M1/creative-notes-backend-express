@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "start": "node app.ts",
-    "dev": "nodemon --exec ts-node app.ts"
+    "dev": "nodemon --exec ts-node app.ts",
+    "lint": "eslint . --ext .ts --cache"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
