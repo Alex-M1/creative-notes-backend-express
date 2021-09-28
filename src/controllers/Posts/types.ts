@@ -1,4 +1,4 @@
-import { TPostStatus } from '@src/commonTypes/controllers';
+import { TPostStatus, TRoles } from '@src/commonTypes/controllers';
 import { Schema } from 'mongoose';
 
 export interface IPostsSchema {
@@ -16,6 +16,7 @@ export interface IPosts extends IPostsSchema {
 
 export interface IPostRequest extends Omit<IPostsSchema, 'author' | 'likes' | 'created_at'> {
   userId: Schema.Types.ObjectId;
+  role: TRoles
 }
 
 export interface IPostsQuery {

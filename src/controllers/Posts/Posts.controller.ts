@@ -24,27 +24,29 @@ export class Posts extends Common {
     }
   };
 
-  getPublicPosts = async (req: Request, res: Response) => {
+  getPublicPosts = async (req: Request, res: Response): Promise<TControllerReturn> => {
     try {
       const theme = req.query.theme as string;
       const page = +req.query.page || INITIAL_PAGE;
-      const perPage = +req.query.per_page || 3;
-      const range = page * perPage;
-      let posts;
-      let total_page;
       if (theme) {
-        posts = await Post.find({ theme }, { __v: false });
-        total_page = Math.ceil(posts.length / perPage);
-        posts = posts.reverse().filter((_post: IPosts, i: number) => i >= range - perPage && i < range);
+        const { posts, total_page } = await this.findPosts(req.query, theme);
+        return this.setResponse(res, 200, { posts, page, total_page });
       }
-      return this.setResponse(res, 200, {
-        posts,
-        page,
-        total_page,
-      });
+      const { posts, total_page } = await this.findPosts(req.query, theme);
+      return this.setResponse(res, 200, { posts, page, total_page });
     } catch (err) {
-      console.log(err);
       return this.setResponse(res, 400, MESSAGES.abstract_err);
     }
+  };
+
+  private findPosts = async (query, theme?: string) => {
+    const page = +query.page || INITIAL_PAGE;
+    const perPage = +query.per_page || PER_PAGE;
+    const range = page * perPage;
+    const postParams = theme ? { theme } : {};
+    let posts = await Post.find(postParams, { __v: false });
+    posts = posts.reverse().filter((_post: IPosts, i: number) => i >= range - perPage && i < range);
+    const total_page = Math.ceil(posts.length / perPage);
+    return { posts, total_page };
   };
 }
