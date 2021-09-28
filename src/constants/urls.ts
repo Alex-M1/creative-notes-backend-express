@@ -8,5 +8,6 @@ export const URLS = {
   posts: {
     create_post: '/create_post',
     public_posts: '/public_posts',
+    private_posts: '/private_posts',
   },
 };

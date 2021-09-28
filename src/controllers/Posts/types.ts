@@ -16,11 +16,16 @@ export interface IPosts extends IPostsSchema {
 
 export interface IPostRequest extends Omit<IPostsSchema, 'author' | 'likes' | 'created_at'> {
   userId: Schema.Types.ObjectId;
-  role: TRoles
+  userRole: TRoles
 }
 
 export interface IPostsQuery {
   theme: string;
   page: string;
   per_page: string;
+}
+
+export interface IFindPostOptions {
+  theme?: string;
+  author?: Schema.Types.ObjectId;
 }
