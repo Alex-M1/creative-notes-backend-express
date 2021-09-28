@@ -25,7 +25,4 @@ export interface IPostsQuery {
   per_page: string;
 }
 
-export interface IFindPostOptions {
-  theme?: string;
-  author?: Schema.Types.ObjectId;
-}
+export type IFindPostOptions = Partial<Pick<IPostsSchema, 'author' | 'theme' | 'status'>>;

@@ -6,4 +6,5 @@ export const MESSAGES = {
   invalid_login: 'invalid_login',
   abstract_err: 'something_wrong',
   un_autorized: 'un_autorized',
+  no_rights: 'no_rights',
 };

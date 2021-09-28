@@ -30,10 +30,10 @@ export class Posts extends Common {
       const theme = req.query.theme as string;
       const page = +req.query.page || INITIAL_PAGE;
       if (theme) {
-        const { posts, total_page } = await this.findPosts(req.query, { theme });
+        const { posts, total_page } = await this.findPosts(req.query, { theme, status: 'public' });
         return this.setResponse(res, 200, { posts, page, total_page });
       }
-      const { posts, total_page } = await this.findPosts(req.query, { theme });
+      const { posts, total_page } = await this.findPosts(req.query, { status: 'public' });
       return this.setResponse(res, 200, { posts, page, total_page });
     } catch (err) {
       return this.setResponse(res, 400, MESSAGES.abstract_err);
@@ -46,14 +46,14 @@ export class Posts extends Common {
       const page = +req.query.page || INITIAL_PAGE;
       const idFromQuery = req.query.id as unknown as Schema.Types.ObjectId;
       if (userRole === 'User') {
-        const { total_page, posts } = await this.findPosts(req.query, { author: userId });
+        const { total_page, posts } = await this.findPosts(req.query, { author: userId, status: 'private' });
         return this.setResponse(res, 200, { posts, page, total_page });
       }
       if (userRole === 'SuperAdmin') {
-        const { total_page, posts } = await this.findPosts(req.query, { author: idFromQuery });
+        const { total_page, posts } = await this.findPosts(req.query, { author: idFromQuery, status: 'private' });
         return this.setResponse(res, 200, { posts, page, total_page });
       }
-      return this.setResponse(res, 403, MESSAGES.abstract_err);
+      return this.setResponse(res, 403, MESSAGES.no_rights);
     } catch (err) {
       return this.setResponse(res, 400, MESSAGES.abstract_err);
     }
@@ -63,7 +63,8 @@ export class Posts extends Common {
     const page = +query.page || INITIAL_PAGE;
     const perPage = +query.per_page || PER_PAGE;
     const range = page * perPage;
-    let posts = await Post.find(options || {}, { __v: false });
+    let posts = await Post.find(options || {}, { __v: false, status: false })
+      .populate({ path: 'author', select: 'login' });
     posts = posts.reverse().filter((_post: IPosts, i: number) => i >= range - perPage && i < range);
     const total_page = Math.ceil(posts.length / perPage);
     return { posts, total_page };
