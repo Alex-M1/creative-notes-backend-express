@@ -9,5 +9,6 @@ export const URLS = {
     create_post: '/create_post',
     public_posts: '/public_posts',
     private_posts: '/private_posts',
+    pending_posts: '/pending_posts',
   },
 };

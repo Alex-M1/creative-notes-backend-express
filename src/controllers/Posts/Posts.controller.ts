@@ -6,7 +6,7 @@ import { TControllerReturn, TPostStatus, TRequest, TRoles } from '@src/commonTyp
 import { Request, Response } from 'express';
 import { Schema } from 'mongoose';
 import { Post } from './Posts.model';
-import { IFindPostOptions, IPostRequest, IPosts } from './types';
+import { IFindPostOptions, IPostRequest, IPosts, IUpdatePostRequest } from './types';
 
 export class Posts extends Common {
   createPost = async (req: TRequest<IPostRequest>, res: Response): Promise<TControllerReturn> => {
@@ -83,6 +83,38 @@ export class Posts extends Common {
         { status: MessageStatus.pending, theme },
       );
       return this.setResponse(res, 200, { page, total_page, posts, theme });
+    } catch (err) {
+      return this.setResponse(res, 400, MESSAGES.abstract_err);
+    }
+  };
+
+  updatePublicPosts = async (req: TRequest<IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
+    try {
+      const { likes, postId } = req.body;
+      await Post.updateOne({ _id: postId }, { $set: { likes } });
+      return this.setResponse(res, 200, MESSAGES.success);
+    } catch (err) {
+      return this.setResponse(res, 400, MESSAGES.abstract_err);
+    }
+  };
+
+  updatePendingPosts = async (req: TRequest<IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
+    try {
+      const { userRole, userId, theme, content, status, postId } = req.body;
+      if (userRole === UsersRoles.user) {
+        await Post.updateOne({ _id: postId }, { $set: { content, theme } });
+        return this.setResponse(res, 200, MESSAGES.success);
+      }
+      if (userRole === UsersRoles.manager) {
+        const post = await Post.findById(postId);
+        if (post._id?.toString() === userId?.toString()) {
+          await Post.updateOne({ _id: postId }, { $set: { status } });
+          return this.setResponse(res, 200, MESSAGES.success);
+        }
+        return this.setResponse(res, 403, MESSAGES.no_rights);
+      }
+      await Post.updateOne({ _id: postId }, { $set: { status } });
+      return this.setResponse(res, 200, MESSAGES.success);
     } catch (err) {
       return this.setResponse(res, 400, MESSAGES.abstract_err);
     }
