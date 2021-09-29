@@ -14,9 +14,13 @@ export interface IPosts extends IPostsSchema {
   _id: string;
 }
 
-export interface IPostRequest extends Omit<IPostsSchema, 'author' | 'likes' | 'created_at'> {
+export interface IPostRequest extends Omit<IPostsSchema, 'author' | 'created_at'> {
   userId: Schema.Types.ObjectId;
   userRole: TRoles
+}
+
+export interface IUpdatePostRequest extends IPostRequest {
+  postId: Schema.Types.ObjectId;
 }
 
 export interface IPostsQuery {

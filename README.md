@@ -123,8 +123,8 @@
   "message": "something_wrong"
 }
 ```
-### Юзер может оправить статус поста только pending или private если он отправит другой статус, 
-### то сервер автоматически присвоит ему статус pending
+### Юзер может оправить статус поста только pending или private если он отправит другой статус,<br>  то сервер автоматически присвоит ему статус pending
+
 
 ## Get public posts
 Для получения постов необходимо отправить **GET** запрос на урл ***/api/public_posts***, <br>
@@ -191,3 +191,57 @@
 Для получения постов необходимо отправить **GET** запрос на урл ***/api/pending_posts***, <br>
 необязательные параметры, и ответы аналогичны предыдущим роутам. Юзер может получить только свои посты,<br>
 Админ и менеджер получат все посты.
+
+## Update public posts
+method: PUT,
+url: /api/public_posts
+body:
+```
+{
+  "postId": string,
+  "likes": number
+}
+```
+status 200
+```
+{
+  "message": "success"
+}
+```
+status 400
+```
+{
+  "message": "something_wrong"
+}
+```
+
+## Update pending posts
+method: PUT,
+url: /api/pending_posts
+body from User:
+```
+{
+  "postId": string,
+  "theme"?: string
+  "content"?: string
+}
+```
+body from other roles 
+```
+{
+  "postId": string,
+  "status": string
+}
+```
+status 200
+```
+{
+  "message": "success"
+}
+```
+status 400
+```
+{
+  "message": "something_wrong"
+}
+```
