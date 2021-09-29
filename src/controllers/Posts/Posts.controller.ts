@@ -67,6 +67,27 @@ export class Posts extends Common {
     }
   };
 
+  getPendingPosts = async (req: TRequest<IPostRequest>, res: Response): Promise<TControllerReturn> => {
+    try {
+      const { userRole, userId } = req.body;
+      const theme = req.query.theme as string;
+      if (userRole === UsersRoles.user) {
+        const { total_page, page, posts } = await this.findPosts(
+          req.query,
+          { author: userId, status: MessageStatus.pending, theme },
+        );
+        return this.setResponse(res, 200, { page, total_page, posts });
+      }
+      const { total_page, page, posts } = await this.findPosts(
+        req.query,
+        { status: MessageStatus.pending, theme },
+      );
+      return this.setResponse(res, 200, { page, total_page, posts, theme });
+    } catch (err) {
+      return this.setResponse(res, 400, MESSAGES.abstract_err);
+    }
+  };
+
   private findPosts = async (query, options?: IFindPostOptions) => {
     const page = +query.page || INITIAL_PAGE;
     const perPage = +query.per_page || PER_PAGE;
@@ -75,7 +96,7 @@ export class Posts extends Common {
       .populate({ path: 'author', select: 'login' });
     posts = posts.reverse().filter((_post: IPosts, i: number) => i >= range - perPage && i < range);
     const total_page = Math.ceil(posts.length / perPage);
-    return { posts, total_page };
+    return { posts, total_page, page };
   };
 
   private checkMessageStatus = (role: TRoles, status: TPostStatus) => {
