@@ -100,10 +100,18 @@ export class Posts extends Common {
 
   updatePendingPosts = async (req: TRequest<IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
     try {
-      const { userRole, theme, content, status, postId } = req.body;
+      const { userRole, userId, theme, content, status, postId } = req.body;
       if (userRole === UsersRoles.user) {
         await Post.updateOne({ _id: postId }, { $set: { content, theme } });
         return this.setResponse(res, 200, MESSAGES.success);
+      }
+      if (userRole === UsersRoles.manager) {
+        const post = await Post.findById(postId);
+        if (post._id?.toString() === userId?.toString()) {
+          await Post.updateOne({ _id: postId }, { $set: { status } });
+          return this.setResponse(res, 200, MESSAGES.success);
+        }
+        return this.setResponse(res, 403, MESSAGES.no_rights);
       }
       await Post.updateOne({ _id: postId }, { $set: { status } });
       return this.setResponse(res, 200, MESSAGES.success);
