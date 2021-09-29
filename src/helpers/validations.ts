@@ -26,6 +26,7 @@ export const tokenValidation = (req: Request, res: Response, next: NextFunction)
   jwt.verify(token, process.env.TOKEN_SECRET, (err: Error, user) => {
     if (err) return res.sendStatus(401).json(MESSAGES.un_autorized);
     req.body.userId = user.userId;
+    req.body.userRole = user.role;
     next();
   });
 };

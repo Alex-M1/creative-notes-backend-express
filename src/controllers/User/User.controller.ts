@@ -38,7 +38,7 @@ export class User extends Common {
       }
       const secret = process.env.TOKEN_SECRET;
       const token = jwt.sign(
-        { userId: user._id },
+        { userId: user._id, role: user.role },
         secret,
         { expiresIn: '10h' },
       );

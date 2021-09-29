@@ -6,7 +6,7 @@
 ```
 {
   "login":"admin",
-  "password": "admin123"
+  "password": "Admin123"
 }
 ```
 Все поля обязательны. Поле логин можно вводить только латинские символы и цифры <br>
@@ -79,7 +79,7 @@
 Статус ***404***
 ```
 {
-    "message": "un_autorized"
+  "message": "un_autorized"
 }
 ```
 
@@ -98,5 +98,150 @@
     "age": "",
     "role": User | Manager | SuperAdmin
   }
+}
+```
+
+# Posts
+## Create post (now without WebSocket) 
+Для создания поста необходимо отправить **POST** запрос на урл ***/api/create_post***, тело запроса <br>должно выгляеть следующим образом
+```
+{
+  "content": "Your content",
+  "theme": "Your theme",
+  "status": 'private' | 'pending' | 'public' | 'rejected'
+}
+```
+При успешном создании поста прийдет ответ со статусом ***200*** и сообщением
+```
+{
+  "message": "success"
+}
+```
+При неудачном создании прийдет ответ со статусом ***400*** и сообщением
+```
+{
+  "message": "something_wrong"
+}
+```
+### Юзер может оправить статус поста только pending или private если он отправит другой статус,<br>  то сервер автоматически присвоит ему статус pending
+
+
+## Get public posts
+Для получения постов необходимо отправить **GET** запрос на урл ***/api/public_posts***, <br>
+Запрос принимает в себя следующие **необязательные** query parameters:
+- theme - вернуть определенную тему поста *по дефолту вернет все темы*,
+- page - номер страницы постов *по дефолту 1*
+- per_page - кол-во постов на 1 странице *по дефолту 10*
+
+При успешном запросе вернет ответ со статусом ***200*** и сообщением
+```
+{
+  "message": {
+    "posts": [
+      {
+        "_id": "615223b63176f45e55841794",
+        "content": "Mock content111",
+        "created_at": 1632773046940,
+        "likes": 0,
+        "theme": "hunting",
+        "author": {
+          "id": 23b63176f45e55841794,
+          "login": Vasian 
+        }
+      },
+      {
+        "_id": "315223b63176f45e55822794",
+        "content": "Mock content111",
+        "created_at": 1632773046940,
+        "likes": 1,
+        "theme": "your theme",
+        "author": {
+          "id": 23b63176f45e55841794,
+          "login": Vasian 
+        }
+      },
+    ],
+    "page": 1,
+    "total_page": 2
+  }
+}
+```
+При неудачном создании прийдет ответ со статусом ***400*** и сообщением
+```
+{
+  "message": "something_wrong"
+}
+```
+## Get private posts
+Для получения постов необходимо отправить **GET** запрос на урл ***/api/private_posts***, <br>
+Запрос принимает в себя следующие **необязательные** query parameters:
+- theme - вернуть определенную тему поста *по дефолту вернет все темы*,
+- page - номер страницы постов *по дефолту 1*
+- per_page - кол-во постов на 1 странице *по дефолту 10*
+Для SuperAdmin`а обязательные query parameters
+- id - id пользователя посты которого нужно получить
+Ответы аналогичны **Get public posts**
+Если кто то пытается получить чужие посты и при этом не является SuperAdmin прийдет ответ статус ***403***
+```
+{
+  "message": "no_rights"
+}
+```
+## Get pending posts
+Для получения постов необходимо отправить **GET** запрос на урл ***/api/pending_posts***, <br>
+необязательные параметры, и ответы аналогичны предыдущим роутам. Юзер может получить только свои посты,<br>
+Админ и менеджер получат все посты.
+
+## Update public posts
+method: PUT,
+url: /api/public_posts
+body:
+```
+{
+  "postId": string,
+  "likes": number
+}
+```
+status 200
+```
+{
+  "message": "success"
+}
+```
+status 400
+```
+{
+  "message": "something_wrong"
+}
+```
+
+## Update pending posts
+method: PUT,
+url: /api/pending_posts
+body from User:
+```
+{
+  "postId": string,
+  "theme"?: string
+  "content"?: string
+}
+```
+body from other roles 
+```
+{
+  "postId": string,
+  "status": string
+}
+```
+status 200
+```
+{
+  "message": "success"
+}
+```
+status 400
+```
+{
+  "message": "something_wrong"
 }
 ```

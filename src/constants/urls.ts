@@ -1,6 +1,14 @@
-export enum URLS {
-  api = '/api',
-  auth = '/authorization',
-  reg = '/registration',
-  userData = '/user_data'
-}
+export const URLS = {
+  api: '/api',
+  user: {
+    auth: '/authorization',
+    reg: '/registration',
+    userData: '/user_data',
+  },
+  posts: {
+    create_post: '/create_post',
+    public_posts: '/public_posts',
+    private_posts: '/private_posts',
+    pending_posts: '/pending_posts',
+  },
+};
