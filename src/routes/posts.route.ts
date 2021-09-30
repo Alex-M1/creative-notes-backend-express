@@ -10,6 +10,7 @@ route.get(URLS.posts.public_posts, tokenValidation, posts.getPublicPosts);
 route.put(URLS.posts.public_posts, tokenValidation, posts.updatePublicPosts);
 
 route.get(URLS.posts.private_posts, tokenValidation, posts.getPrivatePosts);
+route.put(URLS.posts.private_posts, tokenValidation, posts.updatePrivatePosts);
 
 route.get(URLS.posts.pending_posts, tokenValidation, posts.getPendingPosts);
 route.put(URLS.posts.pending_posts, tokenValidation, posts.updatePendingPosts);

@@ -120,6 +120,23 @@ export class Posts extends Common {
     }
   };
 
+  updatePrivatePosts = async (req: TRequest<IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
+    try {
+      const { userRole, userId, status, postId } = req.body;
+      const message = await Post.findById(postId);
+      if (
+        (userRole === UsersRoles.user || userRole === UsersRoles.manager)
+        && message._id?.toString() === userId?.toString()
+      ) {
+        await Post.updateOne({ _id: postId }, { status: this.checkMessageStatus(userRole, status) });
+        return this.setResponse(res, 200, 'success');
+      }
+      await Post.updateOne({ _id: postId }, { status });
+    } catch (err) {
+      return this.setResponse(res, 400, MESSAGES.abstract_err);
+    }
+  };
+
   private findPosts = async (query, options?: IFindPostOptions) => {
     const page = +query.page || INITIAL_PAGE;
     const perPage = +query.per_page || PER_PAGE;
