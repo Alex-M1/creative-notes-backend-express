@@ -4,6 +4,7 @@
   "main": "app.ts",
   "license": "MIT",
   "scripts": {
+    "build": "tsc -b && nodemon ./dist/app.js",
     "start": "node app.ts",
     "dev": "nodemon --exec ts-node app.ts",
     "lint": "eslint . --ext .ts --cache"
