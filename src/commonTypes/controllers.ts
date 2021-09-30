@@ -5,3 +5,8 @@ export type TControllerReturn = Response<any, Record<string, any>>;
 export type TRoles = 'User' | 'Manager' | 'SuperAdmin';
 export type TPostStatus = 'private' | 'pending' | 'public' | 'rejected';
 export type TRequest<B> = Request<ParamsDictionary, any, B, Query, Record<string, any>>;
+export interface ITokenValidation {
+  userId?: string;
+  role?: TRoles;
+  isInvalid?: boolean;
+}

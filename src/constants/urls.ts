@@ -12,3 +12,8 @@ export const URLS = {
     pending_posts: '/pending_posts',
   },
 };
+
+export const SOCKET_EVT = {
+  check_auth: 'check_auth',
+  user_info: 'user_info',
+};

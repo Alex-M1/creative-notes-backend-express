@@ -4,8 +4,11 @@ import bcrypt from 'bcryptjs';
 import { MESSAGES } from '@constants/messages';
 import { Request, Response } from 'express';
 import { TControllerReturn } from '@src/commonTypes/controllers';
+import { tokenValidationWS } from '@src/helpers/validations';
+import { SOCKET_EVT } from '@constants/urls';
 import { Users } from './User.model';
 import { IUser } from './types';
+import { TSocket } from '../Socket/type';
 
 export class User extends Common {
   registration = async (req: Request, res: Response): Promise<TControllerReturn> => {
@@ -48,13 +51,22 @@ export class User extends Common {
     }
   };
 
-  getUserData = async (req: Request, res: Response): Promise<TControllerReturn> => {
+  // getUserData = async (req: Request, res: Response): Promise<TControllerReturn> => {
+  //   try {
+  //     const userID = req.body.userId;
+  //     const user = await Users.findOne({ _id: userID }, { password: false, __v: false, _id: false });
+  //     return this.setResponse(res, 200, user);
+  //   } catch (e) {
+  //     this.setResponse(res, 400, MESSAGES.abstract_err);
+  //   }
+  // };
+  static getUserData = async (socket: TSocket): Promise<void> => {
     try {
-      const userID = req.body.userId;
-      const user = await Users.findOne({ _id: userID }, { password: false, __v: false, _id: false });
-      return this.setResponse(res, 200, user);
+      const { userId } = tokenValidationWS(socket.handshake.auth.token, socket);
+      const user = await Users.findOne({ _id: userId }, { password: false, __v: false, _id: false });
+      socket.emit(SOCKET_EVT.user_info, { message: user });
     } catch (e) {
-      this.setResponse(res, 400, MESSAGES.abstract_err);
+      socket.emit(SOCKET_EVT.user_info, { message: MESSAGES.abstract_err });
     }
   };
 }
