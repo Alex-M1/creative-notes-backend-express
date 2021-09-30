@@ -18,5 +18,9 @@ app.use(cors());
 app.use(URLS.api, userRoute);
 app.use(URLS.api, postsRoute);
 
+app.get('/', (req, res) => {
+res.send('zdarova')
+})
+
 const server = http.createServer(app);
 connect(server);
