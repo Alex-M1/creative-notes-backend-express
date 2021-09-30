@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "tsc -b && nodemon ./dist/app.js",
+    "prod": "pm2 start --name server npm -- run dev",
     "dev": "nodemon --exec ts-node app.ts",
     "lint": "eslint . --ext .ts --cache"
   },
