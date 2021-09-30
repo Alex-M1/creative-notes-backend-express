@@ -19,7 +19,7 @@ app.use(URLS.api, userRoute);
 app.use(URLS.api, postsRoute);
 
 app.get('/', (req, res) => {
-res.send('zdarova')
+    res.send('zdarova')
 })
 
 const server = http.createServer(app);
