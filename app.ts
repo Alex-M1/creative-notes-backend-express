@@ -19,8 +19,8 @@ app.use(URLS.api, userRoute);
 app.use(URLS.api, postsRoute);
 
 app.get('/', (req, res) => {
-    res.send('zdarova')
-})
+  res.send('kek shrek');
+});
 
 const server = http.createServer(app);
 connect(server);
