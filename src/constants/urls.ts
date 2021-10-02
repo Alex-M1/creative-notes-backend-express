@@ -15,5 +15,10 @@ export const URLS = {
 
 export const SOCKET_EVT = {
   check_auth: 'check_auth',
+  error: 'error',
   user_info: 'user_info',
+  create_post: 'create_post',
+  get_public_posts: 'public_posts',
+  get_private_posts: 'private_posts',
+  upd_public_post: 'upd_public_post',
 };

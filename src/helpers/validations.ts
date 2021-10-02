@@ -33,7 +33,8 @@ export const tokenValidation = (req: Request, res: Response, next: NextFunction)
   });
 };
 
-export const tokenValidationWS = (token: string, socket: TSocket): ITokenValidation => {
+export const tokenValidationWS = (socket: TSocket): ITokenValidation => {
+  const token = socket.handshake.headers.authorization;
   try {
     if (!token) {
       socket.emit(SOCKET_EVT.check_auth, { message: MESSAGES.un_autorized });

@@ -51,18 +51,9 @@ export class User extends Common {
     }
   };
 
-  // getUserData = async (req: Request, res: Response): Promise<TControllerReturn> => {
-  //   try {
-  //     const userID = req.body.userId;
-  //     const user = await Users.findOne({ _id: userID }, { password: false, __v: false, _id: false });
-  //     return this.setResponse(res, 200, user);
-  //   } catch (e) {
-  //     this.setResponse(res, 400, MESSAGES.abstract_err);
-  //   }
-  // };
   static getUserData = async (socket: TSocket): Promise<void> => {
     try {
-      const { userId } = tokenValidationWS(socket.handshake.auth.token, socket);
+      const { userId } = tokenValidationWS(socket);
       const user = await Users.findOne({ _id: userId }, { password: false, __v: false, _id: false });
       socket.emit(SOCKET_EVT.user_info, { message: user });
     } catch (e) {

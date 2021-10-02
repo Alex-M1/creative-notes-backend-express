@@ -1,29 +1,47 @@
 import { MESSAGES } from '@constants/messages';
 import { INITIAL_PAGE, MessageStatus, PER_PAGE } from '@constants/posts';
+import { SOCKET_EVT } from '@constants/urls';
 import { UsersRoles } from '@constants/users';
 import { Common } from '@helpers/ControllerHelper';
 import { TControllerReturn, TPostStatus, TRequest, TRoles } from '@src/commonTypes/controllers';
+import { tokenValidationWS } from '@src/helpers/validations';
 import { Request, Response } from 'express';
 import { Schema } from 'mongoose';
+import { TSocket } from '../Socket/type';
 import { Post } from './Posts.model';
-import { IFindPostOptions, IPostRequest, IPosts, IUpdatePostRequest } from './types';
+import { IFindPostOptions, IFindPostOptionsBySocket, IPages, IPostRequest, IPosts, ISocketPost, IUpdatePostRequest } from './types';
 
 export class Posts extends Common {
-  createPost = async (req: TRequest<IPostRequest>, res: Response): Promise<TControllerReturn> => {
+  createPost = (socket: TSocket): void => {
     try {
-      const { content, status, theme, userId, userRole } = req.body;
-      const checkedStatus = this.checkMessageStatus(userRole, status);
-      const post = new Post({
-        theme,
-        status: checkedStatus,
-        content,
-        author: userId,
-        created_at: Date.now(),
+      socket.on(SOCKET_EVT.create_post, async ({ theme, status, content, per_page, page }: ISocketPost) => {
+        const { userId, isInvalid, role } = tokenValidationWS(socket);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+        const checkedStatus = this.checkMessageStatus(role, status);
+        const post = new Post({
+          theme,
+          status: checkedStatus,
+          content,
+          author: userId,
+          created_at: Date.now(),
+        });
+        await post.save();
+
+        if (checkedStatus === MessageStatus.public) {
+          const posts = this.findPostsBySocket({ status: checkedStatus, theme }, { page, per_page });
+          this.Socket.sockets.forEach(socket => {
+            socket.emit(SOCKET_EVT.get_public_posts, { message: posts });
+          });
+        } else if (checkedStatus === MessageStatus.private) {
+          const posts = await this.findPostsBySocket(
+            { author: userId, status: checkedStatus, theme },
+            { page, per_page },
+          );
+          socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
+        }
       });
-      await post.save();
-      return this.setResponse(res, 200, MESSAGES.success);
     } catch (err) {
-      return this.setResponse(res, 400, MESSAGES.abstract_err);
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
     }
   };
 
@@ -88,6 +106,22 @@ export class Posts extends Common {
     }
   };
 
+  updatePublicPostsBySocket = (socket: TSocket): void => {
+    try {
+      socket.on(SOCKET_EVT.upd_public_post, async ({ likes, postId, page, per_page, theme }) => {
+        const { isInvalid } = tokenValidationWS(socket);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+        await Post.updateOne({ _id: postId }, { $set: { likes } });
+        const posts = this.findPostsBySocket({ status: MessageStatus.public, theme }, { page, per_page });
+        this.Socket.sockets.forEach(socket => {
+          socket.emit(SOCKET_EVT.get_public_posts, { message: posts });
+        });
+      });
+    } catch (err) {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
+    }
+  };
+
   updatePublicPosts = async (req: TRequest<IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
     try {
       const { likes, postId } = req.body;
@@ -126,7 +160,7 @@ export class Posts extends Common {
       const message = await Post.findById(postId);
       if (
         (userRole === UsersRoles.user || userRole === UsersRoles.manager)
-        && message._id?.toString() === userId?.toString()
+        && message.author?.toString() === userId?.toString()
       ) {
         await Post.updateOne({ _id: postId }, { status: this.checkMessageStatus(userRole, status) });
         return this.setResponse(res, 200, 'success');
@@ -140,6 +174,17 @@ export class Posts extends Common {
   private findPosts = async (query, options?: IFindPostOptions) => {
     const page = +query.page || INITIAL_PAGE;
     const perPage = +query.per_page || PER_PAGE;
+    const range = page * perPage;
+    let posts = await Post.find(options || {}, { __v: false, status: false })
+      .populate({ path: 'author', select: 'login' });
+    posts = posts.reverse().filter((_post: IPosts, i: number) => i >= range - perPage && i < range);
+    const total_page = Math.ceil(posts.length / perPage);
+    return { posts, total_page, page };
+  };
+
+  private findPostsBySocket = async (options?: IFindPostOptionsBySocket, pagesOption?: IPages) => {
+    const page = +pagesOption.page || INITIAL_PAGE;
+    const perPage = +pagesOption.per_page || PER_PAGE;
     const range = page * perPage;
     let posts = await Post.find(options || {}, { __v: false, status: false })
       .populate({ path: 'author', select: 'login' });
