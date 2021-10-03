@@ -38,5 +38,15 @@ export interface IPostsQuery {
 
 export type TPrivatePostsRequest = IPostsQuery & Partial<Pick<IPostsSchema, 'author'>>;
 
+export type TAbstractObj = {
+  [key: string]: Schema.Types.ObjectId;
+};
+
+export interface IFindPostOptionsBySocketWithSettings {
+  author?: TAbstractObj;
+  theme?: string;
+  status?: TPostStatus;
+}
+
 export type IFindPostOptions = Partial<Pick<IPostsSchema, 'author' | 'theme' | 'status'>>;
-export type IFindPostOptionsBySocket = Partial<Pick<IPostsSchema, 'author' | 'theme' | 'status'>>;
+export type IFindPostOptionsBySocket = Partial<Pick<IPostsSchema, 'author' | 'theme' | 'status'>> | IFindPostOptionsBySocketWithSettings;

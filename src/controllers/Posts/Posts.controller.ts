@@ -9,12 +9,12 @@ import { Request, Response } from 'express';
 import { Schema } from 'mongoose';
 import { TSocket } from '../Socket/type';
 import { Post } from './Posts.model';
-import { IFindPostOptions, IFindPostOptionsBySocket, IPages, IPostRequest, IPosts, IPostsQuery, ISocketPost, IUpdatePostRequest, TPrivatePostsRequest } from './types';
+import * as T from './types';
 
 export class Posts extends Common {
   createPost = (socket: TSocket): void => {
     try {
-      socket.on(SOCKET_EVT.create_post, async ({ theme, status, content }: ISocketPost) => {
+      socket.on(SOCKET_EVT.create_post, async ({ theme, status, content }: T.ISocketPost) => {
         const { userId, isInvalid, role } = tokenValidationWS(socket);
         if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
         const checkedStatus = this.checkMessageStatus(role, status);
@@ -61,7 +61,7 @@ export class Posts extends Common {
 
   getPublicPostsBySockets = (socket: TSocket): void => {
     try {
-      socket.on(SOCKET_EVT.get_public_posts, async ({ page, per_page, theme }: IPostsQuery) => {
+      socket.on(SOCKET_EVT.get_public_posts, async ({ page, per_page, theme }: T.IPostsQuery) => {
         const { isInvalid } = tokenValidationWS(socket);
         if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
         const posts = await this.findPostsBySocket({ theme }, { page, per_page });
@@ -72,7 +72,7 @@ export class Posts extends Common {
     }
   };
 
-  getPrivatePosts = async (req: TRequest<IPostRequest>, res: Response): Promise<TControllerReturn> => {
+  getPrivatePosts = async (req: TRequest<T.IPostRequest>, res: Response): Promise<TControllerReturn> => {
     try {
       const { userRole, userId } = req.body;
       const page = +req.query.page || INITIAL_PAGE;
@@ -101,7 +101,7 @@ export class Posts extends Common {
     try {
       const { userId, isInvalid, role } = tokenValidationWS(socket);
       if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
-      socket.on(SOCKET_EVT.get_private_posts, async ({ page, per_page, theme, author }: TPrivatePostsRequest) => {
+      socket.on(SOCKET_EVT.get_private_posts, async ({ page, per_page, theme, author }: T.TPrivatePostsRequest) => {
         if (role === UsersRoles.superAdmin && author) {
           const posts = await this.findPostsBySocket({ author, theme }, { page, per_page });
           socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
@@ -115,7 +115,7 @@ export class Posts extends Common {
     }
   };
 
-  getPendingPosts = async (req: TRequest<IPostRequest>, res: Response): Promise<TControllerReturn> => {
+  getPendingPosts = async (req: TRequest<T.IPostRequest>, res: Response): Promise<TControllerReturn> => {
     try {
       const { userRole, userId } = req.body;
       const theme = req.query.theme as string;
@@ -136,6 +136,27 @@ export class Posts extends Common {
     }
   };
 
+  getPendingPostsBySockets = (socket: TSocket): boolean => {
+    try {
+      const { userId, isInvalid, role } = tokenValidationWS(socket);
+      if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+      socket.on(SOCKET_EVT.get_pending_posts, async ({ theme, page, per_page }: T.IPostsQuery) => {
+        if (role === UsersRoles.user) {
+          const posts = await this.findPostsBySocket({ author: userId, theme }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+        } else if (role === UsersRoles.manager) {
+          const posts = await this.findPostsBySocket({ author: { $ne: userId }, theme }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+        } else {
+          const posts = await this.findPostsBySocket({ theme }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts }, { page, per_page });
+        }
+      });
+    } catch {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
+    }
+  };
+
   updatePublicPostsBySocket = (socket: TSocket): void => {
     try {
       socket.on(SOCKET_EVT.upd_public_post, async ({ likes, postId, page, per_page, theme }) => {
@@ -152,7 +173,7 @@ export class Posts extends Common {
     }
   };
 
-  updatePendingPosts = async (req: TRequest<IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
+  updatePendingPosts = async (req: TRequest<T.IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
     try {
       const { userRole, userId, theme, content, status, postId } = req.body;
       if (userRole === UsersRoles.user) {
@@ -174,7 +195,7 @@ export class Posts extends Common {
     }
   };
 
-  updatePrivatePosts = async (req: TRequest<IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
+  updatePrivatePosts = async (req: TRequest<T.IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
     try {
       const { userRole, userId, status, postId } = req.body;
       const message = await Post.findById(postId);
@@ -191,24 +212,27 @@ export class Posts extends Common {
     }
   };
 
-  private findPosts = async (query, options?: IFindPostOptions) => {
+  private findPosts = async (query, options?: T.IFindPostOptions) => {
     const page = +query.page || INITIAL_PAGE;
     const perPage = +query.per_page || PER_PAGE;
     const range = page * perPage;
     let posts = await Post.find(options || {}, { __v: false, status: false })
       .populate({ path: 'author', select: 'login' });
-    posts = posts.reverse().filter((_post: IPosts, i: number) => i >= range - perPage && i < range);
+    posts = posts.reverse().filter((_post: T.IPosts, i: number) => i >= range - perPage && i < range);
     const total_page = Math.ceil(posts.length / perPage);
     return { posts, total_page, page };
   };
 
-  private findPostsBySocket = async (options?: IFindPostOptionsBySocket, pagesOption?: IPages) => {
+  private findPostsBySocket = async (
+    options?: T.IFindPostOptionsBySocket,
+    pagesOption?: T.IPages,
+  ) => {
     const page = +pagesOption.page || INITIAL_PAGE;
     const perPage = +pagesOption.per_page || PER_PAGE;
     const range = page * perPage;
     let posts = await Post.find(options || {}, { __v: false, status: false })
       .populate({ path: 'author', select: 'login' });
-    posts = posts.reverse().filter((_post: IPosts, i: number) => i >= range - perPage && i < range);
+    posts = posts.reverse().filter((_post: T.IPosts, i: number) => i >= range - perPage && i < range);
     const total_page = Math.ceil(posts.length / perPage);
     return { posts, total_page, page };
   };
