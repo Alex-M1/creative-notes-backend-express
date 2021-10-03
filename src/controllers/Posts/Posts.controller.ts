@@ -297,7 +297,12 @@ export class Posts extends Common {
     options?: T.IFindPostOptionsBySocket,
     pagesOption?: T.IPages,
   ) => {
-    options.theme = options.theme === 'all' ? undefined : options.theme;
+    if (options.theme === 'all') {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { theme, ...options1 } = options;
+      options = options1;
+    }
+    // options.theme = options.theme === 'all' ? null : options.theme;
     const page = +pagesOption?.page || INITIAL_PAGE;
     const perPage = +pagesOption?.per_page || PER_PAGE;
     const range = page * perPage;
