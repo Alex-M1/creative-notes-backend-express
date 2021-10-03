@@ -11,7 +11,7 @@ const schema = new Schema<IPostsSchema>({
     required: true,
   },
   likes: {
-    type: [Schema.Types.ObjectId],
+    type: [String],
     default: [],
   },
   author: {

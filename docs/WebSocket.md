@@ -140,7 +140,8 @@
       postId: string,
       page?: number,
       per_page?: number,
-      theme?: string
+      theme?: string,
+      login: string,
     }
   ```
   ## Response

@@ -161,14 +161,14 @@ export class Posts extends Common {
 
   updatePublicPostsBySocket = (socket: TSocket): void => {
     try {
-      socket.on(SOCKET_EVT.upd_public_post, async ({ postId, page, per_page, theme }) => {
-        const { isInvalid, userId } = tokenValidationWS(socket);
+      socket.on(SOCKET_EVT.upd_public_post, async ({ postId, page, per_page, theme, login }) => {
+        const { isInvalid } = tokenValidationWS(socket);
         if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
         const checkPost = await Post.findOne({ _id: postId });
-        if (checkPost.likes.includes(userId)) {
+        if (checkPost.likes.includes(login)) {
           return socket.emit(SOCKET_EVT.error, MESSAGES.already_like);
         }
-        await Post.updateOne({ _id: postId }, { $push: { likes: userId } });
+        await Post.updateOne({ _id: postId }, { $push: { likes: login } });
         const posts = this.findPostsBySocket({ status: MessageStatus.public, theme }, { page, per_page });
         this.getAllSockets().forEach(socket => {
           socket.emit(SOCKET_EVT.get_public_posts, { message: posts });
