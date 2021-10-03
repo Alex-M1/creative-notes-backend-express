@@ -29,7 +29,7 @@
           "_id": "615223b63176f45e55841794",
           "content": "Mock content111",
           "created_at": 1632773046940,
-          "likes": 0,
+          "likes": [string(userId)],
           "theme": "hunting",
           "author": {
             "id": 23b63176f45e55841794,
@@ -103,3 +103,56 @@
   Получит все посты со статусом **pending** кроме своих
   ### role === SuperAdmin
   Получит  все посты со статусом **pending**
+
+# Update public posts
+ ## Request
+  #### EVENT:
+  **upd_public_post**
+  #### BODY:
+  ```
+    {
+      postId: string,
+      page?: number,
+      per_page?: number,
+      theme?: string
+    }
+  ```
+  ## Response
+  #### EVENT
+  **get_public_posts**
+  Все пользователи получат обновленные посты
+
+# Update private post
+  ## Request
+  #### EVENT:
+  **upd_private_post**
+  #### BODY:
+  ```
+  {
+    postId: string,
+    status: pending | public(only SuperAdmin),
+    page: number,
+    per_page: number,
+  }
+  ```
+  ## Response
+   #### EVENT:
+   **get_private_posts**
+  Пользователь получит свои приватные посты
+
+# Update pending post
+ ## Request:
+ #### EVENT:
+**upd_pending_post**
+  #### BODY:
+  ```
+  {
+    theme: string,
+    content: string,
+    status: rejected | public | pending(если не надо менять статус)
+    postId: string,
+    page: number,
+    per_page: number
+  }
+  ```
+  

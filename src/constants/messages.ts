@@ -8,4 +8,5 @@ export const MESSAGES = {
   un_autorized: 'un_autorized',
   no_rights: 'no_rights',
   no_content: 'no_content',
+  already_like: 'already_like',
 };

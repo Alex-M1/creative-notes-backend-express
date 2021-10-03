@@ -161,10 +161,14 @@ export class Posts extends Common {
 
   updatePublicPostsBySocket = (socket: TSocket): void => {
     try {
-      socket.on(SOCKET_EVT.upd_public_post, async ({ likes, postId, page, per_page, theme }) => {
-        const { isInvalid } = tokenValidationWS(socket);
+      socket.on(SOCKET_EVT.upd_public_post, async ({ postId, page, per_page, theme }) => {
+        const { isInvalid, userId } = tokenValidationWS(socket);
         if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
-        await Post.updateOne({ _id: postId }, { $set: { likes } });
+        const checkPost = await Post.findOne({ _id: postId });
+        if (checkPost.likes.includes(userId)) {
+          return socket.emit(SOCKET_EVT.error, MESSAGES.already_like);
+        }
+        await Post.updateOne({ _id: postId }, { $push: { likes: userId } });
         const posts = this.findPostsBySocket({ status: MessageStatus.public, theme }, { page, per_page });
         this.getAllSockets().forEach(socket => {
           socket.emit(SOCKET_EVT.get_public_posts, { message: posts });
@@ -210,7 +214,7 @@ export class Posts extends Common {
           socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
         } else if (role === UsersRoles.manager) {
           const post = await Post.findById(postId);
-          if (post.author?.toString() === userId?.toString() && !status) {
+          if (post.author?.toString() === userId?.toString() && status === MessageStatus.pending) {
             await Post.updateOne({ _id: postId }, { $set: { theme, content } });
             const posts = this.findPostsBySocket({ author: userId }, { page, per_page });
             socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
@@ -293,8 +297,8 @@ export class Posts extends Common {
     options?: T.IFindPostOptionsBySocket,
     pagesOption?: T.IPages,
   ) => {
-    const page = +pagesOption.page || INITIAL_PAGE;
-    const perPage = +pagesOption.per_page || PER_PAGE;
+    const page = +pagesOption?.page || INITIAL_PAGE;
+    const perPage = +pagesOption?.per_page || PER_PAGE;
     const range = page * perPage;
     let posts = await Post.find(options || {}, { __v: false, status: false })
       .populate({ path: 'author', select: 'login' });
