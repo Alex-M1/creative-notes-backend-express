@@ -1,21 +1,47 @@
+# Get user data
+  ## Request
+  #### Event
+  **user_info**
+  #### Body
+  ```
+  {}
+  ```
+  ## Response
+   #### EVENT:
+   **user_info**
+   #### BODY:
+   ```
+    {
+      "message":{
+        "login": "qwerty1",
+        "online": false,
+        "name": "Name",
+        "lastName": "",
+        "img": "",
+        "city": "Kharkiv",
+        "age": "",
+        "role": User | Manager | SuperAdmin
+      }
+    }
+   ```
 # Create post 
   ## Request
   #### EVENT:
-    create_post
+  **create_post**
   #### BODY:
   ```
   {
-    theme?: string,
+    theme: string,
     status: pending | private,
     content: string,
-    page?: number - default 1,
-    per_page: number - default 1
+    page: number
+    per_page: number 
   }
   ```
   ## Response
   ### Message status === private
   #### EVENT 
-    get_private_posts
+  **get_private_posts**
   #### BODY
   Юзер который отправил запрос получит:
   ```
@@ -42,13 +68,13 @@
   ```
   ### Message status === pending
   #### EVENT 
-    get_pending_posts
+  **get_pending_posts**
   Получит пост как в предыдущем примере юзер, а так же Админ и Менеджеры
 
 # Get public posts
  ## Request
  #### Event:
-    get_public_posts
+  **get_public_posts**
   #### BODY: 
   {
     page?: number,
@@ -57,14 +83,14 @@
   }
   ## Response 
   #### EVENT 
-    get_public_posts
+  **get_public_posts**
   #### BODY: 
   Аналогично респонсу  ***Create post*** 
 
 # Get private post
   ## Request 
   #### EVENT:
-    get_private_posts
+  **get_private_posts**
   #### BODY:
   ```
     page?: number,
@@ -75,7 +101,7 @@
 
   ### Respose
    #### EVENT
-     get_private_posts
+  **get_private_posts**
 
   ### role === SuperAdmin && author
   Получит приватные посты заданного пользователе

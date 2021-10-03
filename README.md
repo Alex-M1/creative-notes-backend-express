@@ -4,7 +4,11 @@
 
 # Requests 
 
+## Http
+### [Registration](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/Http.md#registration)
+### [Authorization](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/Http.md#authorization)
 ## WebSocket 
+### [Get user data](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/WebSocket.md#get-user-data)
 ### [Create post](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/WebSocket.md#create-post)
 ### [Get public posts](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/WebSocket.md#get-public-posts)
 ### [Get private post](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/WebSocket.md#get-private-post)
