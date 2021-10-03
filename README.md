@@ -20,3 +20,8 @@
 ### [Update public posts](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/WebSocket.md#update-public-posts)
 ### [Update private post](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/WebSocket.md#update-private-post)
 ### [Update pending post](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/WebSocket.md#request-6)
+
+# App Constants 
+ ### [Ключи ошибок](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/APP_CONSTNTS.md#%D0%BA%D0%BB%D1%8E%D1%87%D0%B8-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA)
+ ### [Socket events](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/APP_CONSTNTS.md#socket-events)
+ ### [URLS](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/APP_CONSTNTS.md#urls)
