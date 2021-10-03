@@ -9,12 +9,13 @@ import { Request, Response } from 'express';
 import { Schema } from 'mongoose';
 import { TSocket } from '../Socket/type';
 import { Post } from './Posts.model';
-import { IFindPostOptions, IFindPostOptionsBySocket, IPages, IPostRequest, IPosts, ISocketPost, IUpdatePostRequest } from './types';
+import { IFindPostOptions, IFindPostOptionsBySocket, IPages, IPostRequest, IPosts, IPostsQuery, ISocketPost, IUpdatePostRequest } from './types';
 
 export class Posts extends Common {
+  //нуженли єтот ивент может нужно сделать по сокету только апдейт паблик и апдейт пендинг
   createPost = (socket: TSocket): void => {
     try {
-      socket.on(SOCKET_EVT.create_post, async ({ theme, status, content, per_page, page }: ISocketPost) => {
+      socket.on(SOCKET_EVT.create_post, async ({ theme, status, content }: ISocketPost) => {
         const { userId, isInvalid, role } = tokenValidationWS(socket);
         if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
         const checkedStatus = this.checkMessageStatus(role, status);
@@ -27,17 +28,16 @@ export class Posts extends Common {
         });
         await post.save();
 
-        if (checkedStatus === MessageStatus.public) {
-          const posts = this.findPostsBySocket({ status: checkedStatus, theme }, { page, per_page });
-          this.Socket.sockets.forEach(socket => {
-            socket.emit(SOCKET_EVT.get_public_posts, { message: posts });
-          });
-        } else if (checkedStatus === MessageStatus.private) {
-          const posts = await this.findPostsBySocket(
-            { author: userId, status: checkedStatus, theme },
-            { page, per_page },
-          );
+        const posts = await this.findPostsBySocket(
+          { author: userId, status: checkedStatus, theme },
+        );
+        if (checkedStatus === MessageStatus.private) {
           socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
+        } else if (checkedStatus === MessageStatus.pending) {
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+          this.Socket.sockets.Manager.concat(this.Socket.sockets.SuperAdmin).forEach(person => {
+            person.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+          });
         }
       });
     } catch (err) {
@@ -57,6 +57,19 @@ export class Posts extends Common {
       return this.setResponse(res, 200, { posts, page, total_page });
     } catch (err) {
       return this.setResponse(res, 400, MESSAGES.abstract_err);
+    }
+  };
+
+  getPublicPostsBySockets = (socket: TSocket): void => {
+    try {
+      socket.on(SOCKET_EVT.get_public_posts, async ({ page, per_page, theme }: IPostsQuery) => {
+        const { isInvalid } = tokenValidationWS(socket);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+        const posts = await this.findPostsBySocket({ theme }, { page, per_page });
+        socket.emit(SOCKET_EVT.get_public_posts, { message: posts });
+      });
+    } catch {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
     }
   };
 
@@ -113,22 +126,12 @@ export class Posts extends Common {
         if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
         await Post.updateOne({ _id: postId }, { $set: { likes } });
         const posts = this.findPostsBySocket({ status: MessageStatus.public, theme }, { page, per_page });
-        this.Socket.sockets.forEach(socket => {
+        this.getAllSockets().forEach(socket => {
           socket.emit(SOCKET_EVT.get_public_posts, { message: posts });
         });
       });
     } catch (err) {
       socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
-    }
-  };
-
-  updatePublicPosts = async (req: TRequest<IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
-    try {
-      const { likes, postId } = req.body;
-      await Post.updateOne({ _id: postId }, { $set: { likes } });
-      return this.setResponse(res, 200, MESSAGES.success);
-    } catch (err) {
-      return this.setResponse(res, 400, MESSAGES.abstract_err);
     }
   };
 

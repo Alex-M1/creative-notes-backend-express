@@ -32,8 +32,8 @@ export interface IUpdatePostRequest extends IPostRequest {
 
 export interface IPostsQuery {
   theme: string;
-  page: string;
-  per_page: string;
+  page: number;
+  per_page: number;
 }
 
 export type IFindPostOptions = Partial<Pick<IPostsSchema, 'author' | 'theme' | 'status'>>;

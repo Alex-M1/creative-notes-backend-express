@@ -7,7 +7,7 @@ const route = Router();
 const posts = new Posts();
 
 route.get(URLS.posts.public_posts, tokenValidation, posts.getPublicPosts);
-route.put(URLS.posts.public_posts, tokenValidation, posts.updatePublicPosts);
+// route.put(URLS.posts.public_posts, tokenValidation, posts.updatePublicPosts);
 
 route.get(URLS.posts.private_posts, tokenValidation, posts.getPrivatePosts);
 route.put(URLS.posts.private_posts, tokenValidation, posts.updatePrivatePosts);

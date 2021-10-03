@@ -102,8 +102,9 @@
 ```
 
 # Posts
-## Create post (now without WebSocket) 
-Для создания поста необходимо отправить **POST** запрос на урл ***/api/create_post***, тело запроса <br>должно выгляеть следующим образом
+## Create post (websocket)
+Event ***create_post***, тело запроса <br>
+должно выгляеть следующим образом
 ```
 {
   "content": "Your content",
@@ -111,7 +112,7 @@
   "status": 'private' | 'pending' | 'public' | 'rejected'
 }
 ```
-При успешном создании поста прийдет ответ со статусом ***200*** и сообщением
+В зависимости от пришедшего статуса вызовется ивент get_public_posts || get_private_posts
 ```
 {
   "message": "success"
@@ -245,3 +246,4 @@ status 400
   "message": "something_wrong"
 }
 ```
+# WebSocket

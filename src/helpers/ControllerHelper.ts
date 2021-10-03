@@ -1,5 +1,6 @@
 import { TControllerReturn } from '@src/commonTypes/controllers';
 import { Socket } from '@src/controllers/Socket/Socket.controller';
+import { TSocket } from '@src/controllers/Socket/type';
 import { Response } from 'express';
 
 export class Common {
@@ -13,5 +14,13 @@ export class Common {
     return res.status(status).json({
       message,
     });
+  };
+
+  getAllSockets = (): Array<TSocket> => {
+    return [
+      ...this.Socket.sockets.SuperAdmin,
+      ...this.Socket.sockets.User,
+      ...this.Socket.sockets.Manager,
+    ];
   };
 }
