@@ -9,10 +9,9 @@ import { Request, Response } from 'express';
 import { Schema } from 'mongoose';
 import { TSocket } from '../Socket/type';
 import { Post } from './Posts.model';
-import { IFindPostOptions, IFindPostOptionsBySocket, IPages, IPostRequest, IPosts, IPostsQuery, ISocketPost, IUpdatePostRequest } from './types';
+import { IFindPostOptions, IFindPostOptionsBySocket, IPages, IPostRequest, IPosts, IPostsQuery, ISocketPost, IUpdatePostRequest, TPrivatePostsRequest } from './types';
 
 export class Posts extends Common {
-  //нуженли єтот ивент может нужно сделать по сокету только апдейт паблик и апдейт пендинг
   createPost = (socket: TSocket): void => {
     try {
       socket.on(SOCKET_EVT.create_post, async ({ theme, status, content }: ISocketPost) => {
@@ -95,6 +94,24 @@ export class Posts extends Common {
       return this.setResponse(res, 403, MESSAGES.no_rights);
     } catch (err) {
       return this.setResponse(res, 400, MESSAGES.abstract_err);
+    }
+  };
+
+  getPrivatePostsBySocket = (socket: TSocket): boolean => {
+    try {
+      const { userId, isInvalid, role } = tokenValidationWS(socket);
+      if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+      socket.on(SOCKET_EVT.get_private_posts, async ({ page, per_page, theme, author }: TPrivatePostsRequest) => {
+        if (role === UsersRoles.superAdmin && author) {
+          const posts = await this.findPostsBySocket({ author, theme }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
+        } else {
+          const posts = await this.findPostsBySocket({ author: userId, theme }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
+        }
+      });
+    } catch {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
     }
   };
 

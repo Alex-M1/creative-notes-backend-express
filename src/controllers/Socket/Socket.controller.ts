@@ -47,6 +47,7 @@ export class Socket {
       });
       posts.createPost(socket);
       posts.updatePublicPostsBySocket(socket);
+      posts.getPublicPostsBySockets(socket);
     });
   };
 }

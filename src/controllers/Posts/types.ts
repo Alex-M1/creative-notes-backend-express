@@ -36,6 +36,7 @@ export interface IPostsQuery {
   per_page: number;
 }
 
-export type IFindPostOptions = Partial<Pick<IPostsSchema, 'author' | 'theme' | 'status'>>;
+export type TPrivatePostsRequest = IPostsQuery & Partial<Pick<IPostsSchema, 'author'>>;
 
+export type IFindPostOptions = Partial<Pick<IPostsSchema, 'author' | 'theme' | 'status'>>;
 export type IFindPostOptionsBySocket = Partial<Pick<IPostsSchema, 'author' | 'theme' | 'status'>>;
