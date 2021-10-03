@@ -297,6 +297,7 @@ export class Posts extends Common {
     options?: T.IFindPostOptionsBySocket,
     pagesOption?: T.IPages,
   ) => {
+    options.theme = options.theme === 'all' ? undefined : options.theme;
     const page = +pagesOption?.page || INITIAL_PAGE;
     const perPage = +pagesOption?.per_page || PER_PAGE;
     const range = page * perPage;
