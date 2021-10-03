@@ -1,29 +1,48 @@
 import { MESSAGES } from '@constants/messages';
 import { INITIAL_PAGE, MessageStatus, PER_PAGE } from '@constants/posts';
+import { SOCKET_EVT } from '@constants/urls';
 import { UsersRoles } from '@constants/users';
 import { Common } from '@helpers/ControllerHelper';
 import { TControllerReturn, TPostStatus, TRequest, TRoles } from '@src/commonTypes/controllers';
+import { tokenValidationWS } from '@src/helpers/validations';
 import { Request, Response } from 'express';
 import { Schema } from 'mongoose';
+import { TSocket } from '../Socket/type';
 import { Post } from './Posts.model';
-import { IFindPostOptions, IPostRequest, IPosts, IUpdatePostRequest } from './types';
+import * as T from './types';
 
 export class Posts extends Common {
-  createPost = async (req: TRequest<IPostRequest>, res: Response): Promise<TControllerReturn> => {
+  createPost = (socket: TSocket): void => {
     try {
-      const { content, status, theme, userId, userRole } = req.body;
-      const checkedStatus = this.checkMessageStatus(userRole, status);
-      const post = new Post({
-        theme,
-        status: checkedStatus,
-        content,
-        author: userId,
-        created_at: Date.now(),
+      socket.on(SOCKET_EVT.create_post, async ({ theme, status, content, page, per_page }: T.ISocketPost) => {
+        const { userId, isInvalid, role } = tokenValidationWS(socket);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+        if (!content) return socket.emit(SOCKET_EVT.error, MESSAGES.no_content);
+        const checkedStatus = this.checkMessageStatus(role, status);
+        const post = new Post({
+          theme,
+          status: checkedStatus,
+          content,
+          author: userId,
+          created_at: Date.now(),
+        });
+        await post.save();
+
+        const posts = await this.findPostsBySocket(
+          { author: userId, status: checkedStatus, theme },
+          { page, per_page },
+        );
+        if (checkedStatus === MessageStatus.private) {
+          socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
+        } else if (checkedStatus === MessageStatus.pending) {
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+          this.Socket.sockets.Manager.concat(this.Socket.sockets.SuperAdmin).forEach(person => {
+            person.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+          });
+        }
       });
-      await post.save();
-      return this.setResponse(res, 200, MESSAGES.success);
     } catch (err) {
-      return this.setResponse(res, 400, MESSAGES.abstract_err);
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
     }
   };
 
@@ -42,7 +61,20 @@ export class Posts extends Common {
     }
   };
 
-  getPrivatePosts = async (req: TRequest<IPostRequest>, res: Response): Promise<TControllerReturn> => {
+  getPublicPostsBySockets = (socket: TSocket): void => {
+    try {
+      socket.on(SOCKET_EVT.get_public_posts, async ({ page, per_page, theme }: T.IPostsQuery) => {
+        const { isInvalid } = tokenValidationWS(socket);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+        const posts = await this.findPostsBySocket({ theme }, { page, per_page });
+        socket.emit(SOCKET_EVT.get_public_posts, { message: posts });
+      });
+    } catch {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
+    }
+  };
+
+  getPrivatePosts = async (req: TRequest<T.IPostRequest>, res: Response): Promise<TControllerReturn> => {
     try {
       const { userRole, userId } = req.body;
       const page = +req.query.page || INITIAL_PAGE;
@@ -67,7 +99,25 @@ export class Posts extends Common {
     }
   };
 
-  getPendingPosts = async (req: TRequest<IPostRequest>, res: Response): Promise<TControllerReturn> => {
+  getPrivatePostsBySocket = (socket: TSocket): boolean => {
+    try {
+      const { userId, isInvalid, role } = tokenValidationWS(socket);
+      if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+      socket.on(SOCKET_EVT.get_private_posts, async ({ page, per_page, theme, author }: T.TPrivatePostsRequest) => {
+        if (role === UsersRoles.superAdmin && author) {
+          const posts = await this.findPostsBySocket({ author, theme }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
+        } else {
+          const posts = await this.findPostsBySocket({ author: userId, theme }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
+        }
+      });
+    } catch {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
+    }
+  };
+
+  getPendingPosts = async (req: TRequest<T.IPostRequest>, res: Response): Promise<TControllerReturn> => {
     try {
       const { userRole, userId } = req.body;
       const theme = req.query.theme as string;
@@ -88,17 +138,48 @@ export class Posts extends Common {
     }
   };
 
-  updatePublicPosts = async (req: TRequest<IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
+  getPendingPostsBySockets = (socket: TSocket): boolean => {
     try {
-      const { likes, postId } = req.body;
-      await Post.updateOne({ _id: postId }, { $set: { likes } });
-      return this.setResponse(res, 200, MESSAGES.success);
-    } catch (err) {
-      return this.setResponse(res, 400, MESSAGES.abstract_err);
+      const { userId, isInvalid, role } = tokenValidationWS(socket);
+      if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+      socket.on(SOCKET_EVT.get_pending_posts, async ({ theme, page, per_page }: T.IPostsQuery) => {
+        if (role === UsersRoles.user) {
+          const posts = await this.findPostsBySocket({ author: userId, theme }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+        } else if (role === UsersRoles.manager) {
+          const posts = await this.findPostsBySocket({ author: { $ne: userId }, theme }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+        } else {
+          const posts = await this.findPostsBySocket({ theme }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts }, { page, per_page });
+        }
+      });
+    } catch {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
     }
   };
 
-  updatePendingPosts = async (req: TRequest<IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
+  updatePublicPostsBySocket = (socket: TSocket): void => {
+    try {
+      socket.on(SOCKET_EVT.upd_public_post, async ({ postId, page, per_page, theme }) => {
+        const { isInvalid, userId } = tokenValidationWS(socket);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+        const checkPost = await Post.findOne({ _id: postId });
+        if (checkPost.likes.includes(userId)) {
+          return socket.emit(SOCKET_EVT.error, MESSAGES.already_like);
+        }
+        await Post.updateOne({ _id: postId }, { $push: { likes: userId } });
+        const posts = this.findPostsBySocket({ status: MessageStatus.public, theme }, { page, per_page });
+        this.getAllSockets().forEach(socket => {
+          socket.emit(SOCKET_EVT.get_public_posts, { message: posts });
+        });
+      });
+    } catch (err) {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
+    }
+  };
+
+  updatePendingPosts = async (req: TRequest<T.IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
     try {
       const { userRole, userId, theme, content, status, postId } = req.body;
       if (userRole === UsersRoles.user) {
@@ -120,13 +201,111 @@ export class Posts extends Common {
     }
   };
 
-  private findPosts = async (query, options?: IFindPostOptions) => {
+  updatePendingPostsBySockets = (socket: TSocket): void => {
+    try {
+      socket.on(SOCKET_EVT.upd_pending_post, async (
+        { theme, content, status, postId, page, per_page }: T.IUpdatePendingPosts,
+      ) => {
+        const { isInvalid, role, userId } = tokenValidationWS(socket);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+        if (role === UsersRoles.user) {
+          await Post.updateOne({ _id: postId }, { $set: { content, theme } });
+          const posts = this.findPostsBySocket({ author: userId }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+        } else if (role === UsersRoles.manager) {
+          const post = await Post.findById(postId);
+          if (post.author?.toString() === userId?.toString() && status === MessageStatus.pending) {
+            await Post.updateOne({ _id: postId }, { $set: { theme, content } });
+            const posts = this.findPostsBySocket({ author: userId }, { page, per_page });
+            socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+          } else if (post.author?.toString() !== userId?.toString() && !content && !theme) {
+            await Post.updateOne({ _id: postId }, { $set: { status } });
+            const posts = this.findPostsBySocket({ author: userId }, { page, per_page });
+            if (status === MessageStatus.public) {
+              this.getAllSockets().forEach(person => {
+                person.emit(SOCKET_EVT.get_public_posts, { message: posts });
+              });
+            }
+            socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+          }
+        } else if (role === UsersRoles.superAdmin) {
+          await Post.updateOne({ _id: postId }, { $set: { status } });
+          const posts = this.findPostsBySocket({ author: userId }, { page, per_page });
+          if (status === MessageStatus.public) {
+            this.getAllSockets().forEach(person => {
+              person.emit(SOCKET_EVT.get_public_posts, { message: posts });
+            });
+          }
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+        }
+        socket.emit(SOCKET_EVT.error, { message: MESSAGES.no_rights });
+      });
+    } catch {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
+    }
+  };
+
+  updatePrivatePosts = async (req: TRequest<T.IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
+    try {
+      const { userRole, userId, status, postId } = req.body;
+      const message = await Post.findById(postId);
+      if (
+        (userRole === UsersRoles.user || userRole === UsersRoles.manager)
+        && message.author?.toString() === userId?.toString()
+      ) {
+        await Post.updateOne({ _id: postId }, { status: this.checkMessageStatus(userRole, status) });
+        return this.setResponse(res, 200, 'success');
+      }
+      await Post.updateOne({ _id: postId }, { status });
+    } catch (err) {
+      return this.setResponse(res, 400, MESSAGES.abstract_err);
+    }
+  };
+
+  updatePrivatePostsBySocket = (socket: TSocket): void => {
+    try {
+      socket.on(SOCKET_EVT.upd_private_post, async ({ postId, status, page, per_page }) => {
+        const { isInvalid, role, userId } = tokenValidationWS(socket);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+        const post = await Post.findById(postId);
+        const checkedStatus = this.checkMessageStatus(role, status);
+        if (post.author?.toString() === userId?.toString()) {
+          await Post.updateOne({ _id: postId }, { status: checkedStatus });
+          const posts = await this.findPostsBySocket({ author: userId, status: checkedStatus }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
+        } else {
+          socket.emit(SOCKET_EVT.error, { message: MESSAGES.no_rights });
+        }
+      });
+    } catch {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
+    }
+  };
+
+  private findPosts = async (query, options?: T.IFindPostOptions) => {
     const page = +query.page || INITIAL_PAGE;
     const perPage = +query.per_page || PER_PAGE;
     const range = page * perPage;
     let posts = await Post.find(options || {}, { __v: false, status: false })
       .populate({ path: 'author', select: 'login' });
-    posts = posts.reverse().filter((_post: IPosts, i: number) => i >= range - perPage && i < range);
+    posts = posts.reverse().filter((_post: T.IPosts, i: number) => i >= range - perPage && i < range);
+    const total_page = Math.ceil(posts.length / perPage);
+    return { posts, total_page, page };
+  };
+
+  private findPostsBySocket = async (
+    options?: T.IFindPostOptionsBySocket,
+    pagesOption?: T.IPages,
+  ) => {
+    if (options.theme === 'all') {
+      delete options.theme;
+    }
+    const page = +pagesOption?.page || INITIAL_PAGE;
+    const perPage = +pagesOption?.per_page || PER_PAGE;
+    const range = page * perPage;
+    let posts = await Post.find(options || {}, { __v: false, status: false })
+      .populate({ path: 'author', select: 'login' });
+    posts = posts.reverse().filter((_post: T.IPosts, i: number) => i >= range - perPage && i < range);
     const total_page = Math.ceil(posts.length / perPage);
     return { posts, total_page, page };
   };

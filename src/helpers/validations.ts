@@ -1,6 +1,8 @@
 import { MESSAGES } from '@constants/messages';
 import { AUTH_REGULAR } from '@constants/regulars';
-import { TControllerReturn } from '@src/commonTypes/controllers';
+import { SOCKET_EVT } from '@constants/urls';
+import { ITokenValidation, TControllerReturn } from '@src/commonTypes/controllers';
+import { TSocket } from '@src/controllers/Socket/type';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -29,4 +31,19 @@ export const tokenValidation = (req: Request, res: Response, next: NextFunction)
     req.body.userRole = user.role;
     next();
   });
+};
+
+export const tokenValidationWS = (socket: TSocket): ITokenValidation => {
+  const token = socket.handshake.headers.authorization;
+  try {
+    if (!token) {
+      socket.emit(SOCKET_EVT.check_auth, { message: MESSAGES.un_autorized });
+      return { isInvalid: true };
+    }
+    const { userId, role } = jwt.verify(token, process.env.TOKEN_SECRET) as jwt.JwtPayload;
+    return { userId, role };
+  } catch (err) {
+    socket.emit(SOCKET_EVT.check_auth, { message: MESSAGES.un_autorized });
+    return { isInvalid: true };
+  }
 };
