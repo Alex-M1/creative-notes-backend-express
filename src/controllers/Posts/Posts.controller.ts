@@ -256,6 +256,26 @@ export class Posts extends Common {
     }
   };
 
+  updatePrivatePostsBySocket = (socket: TSocket): void => {
+    try {
+      socket.on(SOCKET_EVT.upd_private_post, async ({ postId, status, page, per_page }) => {
+        const { isInvalid, role, userId } = tokenValidationWS(socket);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+        const post = await Post.findById(postId);
+        const checkedStatus = this.checkMessageStatus(role, status);
+        if (post.author?.toString() === userId?.toString()) {
+          await Post.updateOne({ _id: postId }, { status: checkedStatus });
+          const posts = await this.findPostsBySocket({ author: userId, status: checkedStatus }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
+        } else {
+          socket.emit(SOCKET_EVT.error, { message: MESSAGES.no_rights });
+        }
+      });
+    } catch {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
+    }
+  };
+
   private findPosts = async (query, options?: T.IFindPostOptions) => {
     const page = +query.page || INITIAL_PAGE;
     const perPage = +query.per_page || PER_PAGE;

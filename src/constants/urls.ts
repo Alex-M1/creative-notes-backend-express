@@ -23,4 +23,5 @@ export const SOCKET_EVT = {
   get_pending_posts: 'get_pending_posts',
   upd_public_post: 'upd_public_post',
   upd_pending_post: 'upd_pending_post',
+  upd_private_post: 'upd_private_post',
 };

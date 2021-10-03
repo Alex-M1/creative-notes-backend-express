@@ -46,10 +46,12 @@ export class Socket {
         this.sockets[role].splice(this.sockets[role].indexOf(socket), 1);
       });
       posts.createPost(socket);
-      posts.updatePublicPostsBySocket(socket);
       posts.getPublicPostsBySockets(socket);
       posts.getPendingPostsBySockets(socket);
       posts.getPrivatePostsBySocket(socket);
+      posts.updatePublicPostsBySocket(socket);
+      posts.updatePendingPostsBySockets(socket);
+      posts.updatePrivatePostsBySocket(socket);
     });
   };
 }
