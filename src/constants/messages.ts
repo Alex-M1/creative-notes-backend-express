@@ -7,4 +7,6 @@ export const MESSAGES = {
   abstract_err: 'something_wrong',
   un_autorized: 'un_autorized',
   no_rights: 'no_rights',
+  no_content: 'no_content',
+  already_like: 'already_like',
 };

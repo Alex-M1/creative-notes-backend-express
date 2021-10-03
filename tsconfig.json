@@ -4,6 +4,7 @@
     "target": "es5", // В JS какого века компилировать
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "outDir": "./dist",
     "module": "commonjs",
     "lib": [
       "es6"
@@ -11,7 +12,7 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node", // Формат модулей (на входе)
     "sourceMap": true, // Нужно ли юзать удобные для дебага source map'ы (да, нужно)
-    "baseUrl": ".", // Где сам проект находится
+    "baseUrl": "./", // Где сам проект находится
     "paths": {
       "*": [
         "node_modules/*",
