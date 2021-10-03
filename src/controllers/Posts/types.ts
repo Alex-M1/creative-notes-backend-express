@@ -48,5 +48,9 @@ export interface IFindPostOptionsBySocketWithSettings {
   status?: TPostStatus;
 }
 
+export interface IUpdatePendingPosts extends Partial<Pick<IPostsSchema, 'content' | 'theme' | 'status'>>, IPages {
+  postId: Schema.Types.ObjectId
+}
+
 export type IFindPostOptions = Partial<Pick<IPostsSchema, 'author' | 'theme' | 'status'>>;
 export type IFindPostOptionsBySocket = Partial<Pick<IPostsSchema, 'author' | 'theme' | 'status'>> | IFindPostOptionsBySocketWithSettings;

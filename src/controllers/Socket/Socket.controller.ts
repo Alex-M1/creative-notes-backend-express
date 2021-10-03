@@ -8,7 +8,7 @@ import { Users } from '../User/User.model';
 import { User } from '../User/User.controller';
 import { Posts } from '../Posts/Posts.controller';
 
-let instance;
+let instance: Socket;
 
 let io: Server = null;
 export class Socket {
@@ -48,6 +48,8 @@ export class Socket {
       posts.createPost(socket);
       posts.updatePublicPostsBySocket(socket);
       posts.getPublicPostsBySockets(socket);
+      posts.getPendingPostsBySockets(socket);
+      posts.getPrivatePostsBySocket(socket);
     });
   };
 }

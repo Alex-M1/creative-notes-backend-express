@@ -195,6 +195,50 @@ export class Posts extends Common {
     }
   };
 
+  updatePendingPostsBySockets = (socket: TSocket): void => {
+    try {
+      socket.on(SOCKET_EVT.upd_pending_post, async (
+        { theme, content, status, postId, page, per_page }: T.IUpdatePendingPosts,
+      ) => {
+        const { isInvalid, role, userId } = tokenValidationWS(socket);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+        if (role === UsersRoles.user) {
+          await Post.updateOne({ _id: postId }, { $set: { content, theme } });
+          const posts = this.findPostsBySocket({ author: userId }, { page, per_page });
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+        } else if (role === UsersRoles.manager) {
+          const post = await Post.findById(postId);
+          if (post.author?.toString() === userId?.toString() && !status) {
+            await Post.updateOne({ _id: postId }, { $set: { theme, content } });
+            const posts = this.findPostsBySocket({ author: userId }, { page, per_page });
+            socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+          } else if (post.author?.toString() !== userId?.toString() && !content && !theme) {
+            await Post.updateOne({ _id: postId }, { $set: { status } });
+            const posts = this.findPostsBySocket({ author: userId }, { page, per_page });
+            if (status === MessageStatus.public) {
+              this.getAllSockets().forEach(person => {
+                person.emit(SOCKET_EVT.get_public_posts, { message: posts });
+              });
+            }
+            socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+          }
+        } else if (role === UsersRoles.superAdmin) {
+          await Post.updateOne({ _id: postId }, { $set: { status } });
+          const posts = this.findPostsBySocket({ author: userId }, { page, per_page });
+          if (status === MessageStatus.public) {
+            this.getAllSockets().forEach(person => {
+              person.emit(SOCKET_EVT.get_public_posts, { message: posts });
+            });
+          }
+          socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
+        }
+        socket.emit(SOCKET_EVT.error, { message: MESSAGES.no_rights });
+      });
+    } catch {
+      socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err });
+    }
+  };
+
   updatePrivatePosts = async (req: TRequest<T.IUpdatePostRequest>, res: Response): Promise<TControllerReturn> => {
     try {
       const { userRole, userId, status, postId } = req.body;
