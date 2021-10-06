@@ -66,7 +66,7 @@ export class Posts extends Common {
       socket.on(SOCKET_EVT.get_public_posts, async ({ page, per_page, theme }: T.IPostsQuery) => {
         const { isInvalid } = tokenValidationWS(socket);
         if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
-        const posts = await this.findPostsBySocket({ theme }, { page, per_page });
+        const posts = await this.findPostsBySocket({ theme, status: MessageStatus.public }, { page, per_page });
         socket.emit(SOCKET_EVT.get_public_posts, { message: posts });
       });
     } catch {
@@ -144,13 +144,22 @@ export class Posts extends Common {
       if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
       socket.on(SOCKET_EVT.get_pending_posts, async ({ theme, page, per_page }: T.IPostsQuery) => {
         if (role === UsersRoles.user) {
-          const posts = await this.findPostsBySocket({ author: userId, theme }, { page, per_page });
+          const posts = await this.findPostsBySocket(
+            { author: userId, theme, status: MessageStatus.pending },
+            { page, per_page },
+          );
           socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
         } else if (role === UsersRoles.manager) {
-          const posts = await this.findPostsBySocket({ author: { $ne: userId }, theme }, { page, per_page });
+          const posts = await this.findPostsBySocket(
+            { author: { $ne: userId }, theme, status: MessageStatus.pending },
+            { page, per_page },
+          );
           socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
         } else {
-          const posts = await this.findPostsBySocket({ theme }, { page, per_page });
+          const posts = await this.findPostsBySocket(
+            { theme, status: MessageStatus.pending },
+            { page, per_page },
+          );
           socket.emit(SOCKET_EVT.get_pending_posts, { message: posts }, { page, per_page });
         }
       });

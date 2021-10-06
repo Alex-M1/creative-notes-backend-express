@@ -131,7 +131,7 @@
   Получит  все посты со статусом **pending**
 
 # Update public posts
- ## Request
+  ## Request
   #### EVENT:
   **upd_public_post**
   #### BODY:
