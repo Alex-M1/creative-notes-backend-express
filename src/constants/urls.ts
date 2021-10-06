@@ -27,4 +27,5 @@ export const SOCKET_EVT = {
   upd_public_post: 'upd_public_post',
   upd_pending_post: 'upd_pending_post',
   upd_private_post: 'upd_private_post',
+  create_comment: 'create_comment',
 };

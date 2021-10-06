@@ -6,7 +6,7 @@ import express from 'express';
 import { connect } from '@helpers/connect';
 import { URLS } from '@constants/urls';
 import userRoute from '@routes/user.route';
-import postsRoute from '@routes/posts.route';
+// import postsRoute from '@routes/posts.route';
 
 config();
 
@@ -16,11 +16,8 @@ app.use(express.json());
 app.use(cors());
 
 app.use(URLS.api, userRoute);
-app.use(URLS.api, postsRoute);
+// app.use(URLS.api, postsRoute);
 
-app.get('/', (req, res) => {
-  res.send('kek shrek');
-});
 
 const server = http.createServer(app);
 connect(server);
