@@ -2,3 +2,6 @@
 /coverage
 yarn-error.log
 .eslintcache
+/dist
+/.idea
+/.vscode
