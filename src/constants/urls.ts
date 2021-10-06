@@ -4,6 +4,9 @@ export const URLS = {
     auth: '/authorization',
     reg: '/registration',
     userData: '/user_data',
+    change_pass: '/change_password',
+    change_user_data: 'change_user_data',
+    change_user_role: 'change_user_role',
   },
   posts: {
     create_post: '/create_post',

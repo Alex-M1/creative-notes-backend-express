@@ -131,7 +131,7 @@
   Получит  все посты со статусом **pending**
 
 # Update public posts
- ## Request
+  ## Request
   #### EVENT:
   **upd_public_post**
   #### BODY:
@@ -140,7 +140,8 @@
       postId: string,
       page?: number,
       per_page?: number,
-      theme?: string
+      theme?: string,
+      login: string,
     }
   ```
   ## Response

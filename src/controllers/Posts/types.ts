@@ -6,7 +6,7 @@ export interface IPostsSchema {
   author: Schema.Types.ObjectId;
   status: TPostStatus;
   theme: string;
-  likes: Array<Schema.Types.ObjectId>;
+  likes: Array<string>;
   created_at: number;
 }
 

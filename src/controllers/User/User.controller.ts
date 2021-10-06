@@ -6,6 +6,7 @@ import { Request, Response } from 'express';
 import { TControllerReturn } from '@src/commonTypes/controllers';
 import { tokenValidationWS } from '@src/helpers/validations';
 import { SOCKET_EVT } from '@constants/urls';
+import { UsersRoles } from '@constants/users';
 import { Users } from './User.model';
 import { IUser } from './types';
 import { TSocket } from '../Socket/type';
@@ -58,6 +59,48 @@ export class User extends Common {
       socket.emit(SOCKET_EVT.user_info, { message: user });
     } catch (e) {
       socket.emit(SOCKET_EVT.user_info, { message: MESSAGES.abstract_err });
+    }
+  };
+
+  changeUserData = async (req: Request, res: Response): Promise<TControllerReturn> => {
+    try {
+      const { userId, ...userData } = req.body;
+      if (userData.password || userData.login || userData.role) {
+        return this.setResponse(res, 400, MESSAGES.no_rights);
+      }
+      const newData = await Users.findOneAndUpdate({ _id: userId }, { $set: { ...userData } });
+      return this.setResponse(res, 200, newData);
+    } catch {
+      return this.setResponse(res, 400, MESSAGES.abstract_err);
+    }
+  };
+
+  changePassword = async (req: Request, res: Response): Promise<TControllerReturn> => {
+    try {
+      const { userId, oldPassword, newPassword } = req.body;
+      const user = await Users.findById(userId);
+      const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isPasswordMatch) {
+        return this.setResponse(res, 401, MESSAGES.invalid_password);
+      }
+      const hashedPassword = await bcrypt.hash(newPassword, +process.env.SALT);
+      await Users.updateOne({ _id: userId }, { $set: { password: hashedPassword } });
+      return this.setResponse(res, 200, MESSAGES.changed_password);
+    } catch {
+      return this.setResponse(res, 400, MESSAGES.abstract_err);
+    }
+  };
+
+  upgradeUserRole = async (req: Request, res: Response): Promise<TControllerReturn> => {
+    try {
+      const { role, user, userRole } = req.body;
+      if (role !== UsersRoles.superAdmin || userRole === UsersRoles.superAdmin) {
+        return this.setResponse(res, 400, MESSAGES.no_rights);
+      }
+      await Users.updateOne({ _id: user }, { $set: { role: userRole } });
+      return this.setResponse(res, 200, MESSAGES.success);
+    } catch {
+      return this.setResponse(res, 400, MESSAGES.abstract_err);
     }
   };
 }
