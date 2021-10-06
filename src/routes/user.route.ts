@@ -1,13 +1,15 @@
 import { Router } from 'express';
 import { User } from '@controllers/User/User.controller';
 import { URLS } from '@constants/urls';
-import { authValidation } from '@src/helpers/validations';
+import { authValidation, tokenValidation } from '@src/helpers/validations';
 
 const route = Router();
-const { registration, login } = new User();
+const user = new User();
 
-route.post(URLS.user.reg, authValidation, registration);
-route.post(URLS.user.auth, authValidation, login);
-// route.get(URLS.user.userData, tokenValidation, getUserData);
+route.post(URLS.user.reg, authValidation, user.registration);
+route.post(URLS.user.auth, authValidation, user.login);
+route.put(URLS.user.change_pass, tokenValidation, user.changePassword);
+route.put(URLS.user.change_user_data, tokenValidation, user.changeUserData);
+route.put(URLS.user.change_user_role, tokenValidation, user.upgradeUserRole);
 
 export default route;

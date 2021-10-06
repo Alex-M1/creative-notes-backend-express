@@ -9,4 +9,5 @@ export const MESSAGES = {
   no_rights: 'no_rights',
   no_content: 'no_content',
   already_like: 'already_like',
+  changed_password: 'password_is_changed',
 };
