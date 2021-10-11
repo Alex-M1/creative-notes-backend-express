@@ -68,8 +68,8 @@ export class User extends Common {
       if (userData.password || userData.login || userData.role) {
         return this.setResponse(res, 400, MESSAGES.no_rights);
       }
-     await Users.updateOne({ _id: userId }, { $set: { ...userData } });
-      const user = await Users.findOne({ _id: userId }, { password: false, __v: false, _id: false });
+      await Users.updateOne({ _id: userId }, { $set: { ...userData } });
+      const newData = await Users.findOne({ _id: userId }, { password: false, __v: false, _id: false });
       return this.setResponse(res, 200, newData);
     } catch {
       return this.setResponse(res, 400, MESSAGES.abstract_err);
