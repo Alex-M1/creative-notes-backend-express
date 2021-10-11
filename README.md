@@ -11,6 +11,10 @@
 ## Http
 ### [Registration](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/Http.md#registration)
 ### [Authorization](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/Http.md#authorization)
+### [Update user data ](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/Http.md#update-user-data)
+### [Change password ](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/Http.md#change-password)
+### [Change user role ](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/Http.md#change-user-role)
+### [Get users ](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/Http.md#get-users)
 ## WebSocket 
 ### [Get user data](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/WebSocket.md#get-user-data)
 ### [Create post](https://github.com/Alex-M1/creative-notes-backend-express/blob/posts/docs/WebSocket.md#create-post)
