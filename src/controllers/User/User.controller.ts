@@ -7,6 +7,7 @@ import { TControllerReturn } from '@src/commonTypes/controllers';
 import { tokenValidationWS } from '@src/helpers/validations';
 import { SOCKET_EVT } from '@constants/urls';
 import { UsersRoles } from '@constants/users';
+import { INITIAL_PAGE, PER_PAGE } from '@constants/posts';
 import { Users } from './User.model';
 import { IUser } from './types';
 import { TSocket } from '../Socket/type';
@@ -98,8 +99,16 @@ export class User extends Common {
       if (userRole !== UsersRoles.superAdmin) {
         return this.setResponse(res, 200, MESSAGES.no_rights);
       }
-      const users = await Users.find({ role: { $ne: UsersRoles.superAdmin } });
-      return this.setResponse(res, 200, users);
+      const page = +req.query.page || INITIAL_PAGE;
+      const perPage = +req.query.per_page || PER_PAGE;
+      const range = page * perPage;
+      let users = await Users.find(
+        { role: { $ne: UsersRoles.superAdmin } },
+        { password: false, __v: false, age: false, name: false, lastName: false, city: false },
+      );
+      users = users.filter((_users: any, i: number) => i >= range - perPage && i < range);
+      const total_page = Math.ceil(users.length / perPage);
+      return this.setResponse(res, 200, { users, total_page, page });
     } catch {
       return this.setResponse(res, 400, MESSAGES.abstract_err);
     }
@@ -108,10 +117,10 @@ export class User extends Common {
   upgradeUserRole = async (req: Request, res: Response): Promise<TControllerReturn> => {
     try {
       const { role, user, userRole } = req.body;
-      if (role !== UsersRoles.superAdmin || userRole === UsersRoles.superAdmin) {
+      if (userRole !== UsersRoles.superAdmin || role === UsersRoles.superAdmin) {
         return this.setResponse(res, 400, MESSAGES.no_rights);
       }
-      await Users.updateOne({ _id: user }, { $set: { role: userRole } });
+      await Users.updateOne({ _id: user }, { $set: { role } });
       return this.setResponse(res, 200, MESSAGES.success);
     } catch {
       return this.setResponse(res, 400, MESSAGES.abstract_err);
