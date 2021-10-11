@@ -11,5 +11,6 @@ route.post(URLS.user.auth, authValidation, user.login);
 route.put(URLS.user.change_pass, tokenValidation, user.changePassword);
 route.put(URLS.user.change_user_data, tokenValidation, user.changeUserData);
 route.put(URLS.user.change_user_role, tokenValidation, user.upgradeUserRole);
+route.get(URLS.user.get_users, tokenValidation, user.getUsersToSuperAdmin);
 
 export default route;

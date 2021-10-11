@@ -91,6 +91,19 @@ export class User extends Common {
     }
   };
 
+  getUsersToSuperAdmin = async (req: Request, res: Response): Promise<TControllerReturn> => {
+    try {
+      const { userRole } = req.body;
+      if (userRole !== UsersRoles.superAdmin) {
+        return this.setResponse(res, 200, MESSAGES.no_rights);
+      }
+      const users = await Users.find({ role: { $ne: UsersRoles.superAdmin } });
+      return this.setResponse(res, 200, users);
+    } catch {
+      return this.setResponse(res, 400, MESSAGES.abstract_err);
+    }
+  };
+
   upgradeUserRole = async (req: Request, res: Response): Promise<TControllerReturn> => {
     try {
       const { role, user, userRole } = req.body;

@@ -7,6 +7,7 @@ export const URLS = {
     change_pass: '/change_password',
     change_user_data: 'change_user_data',
     change_user_role: 'change_user_role',
+    get_users: '/get_users',
   },
   posts: {
     create_post: '/create_post',

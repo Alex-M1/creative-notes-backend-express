@@ -39,6 +39,10 @@ export class Posts extends Common {
           this.Socket.sockets.Manager.concat(this.Socket.sockets.SuperAdmin).forEach(person => {
             person.emit(SOCKET_EVT.get_pending_posts, { message: posts });
           });
+        } else if (checkedStatus === MessageStatus.public) {
+          this.getAllSockets().forEach(socket => {
+            socket.emit(SOCKET_EVT.get_public_posts, { message: posts });
+          });
         }
       });
     } catch (err) {
@@ -314,8 +318,8 @@ export class Posts extends Common {
     const range = page * perPage;
     let posts = await Post.find(options || {}, { __v: false, status: false })
       .populate({ path: 'author', select: 'login' });
-    posts = posts.reverse().filter((_post: T.IPosts, i: number) => i >= range - perPage && i < range);
     const total_page = Math.ceil(posts.length / perPage);
+    posts = posts.reverse().filter((_post: T.IPosts, i: number) => i >= range - perPage && i < range);
     return { posts, total_page, page };
   };
 
