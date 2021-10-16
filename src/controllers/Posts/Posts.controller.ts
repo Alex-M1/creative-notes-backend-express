@@ -229,12 +229,22 @@ export class Posts extends Common {
           const post = await Post.findById(postId);
           if (post.author?.toString() === userId?.toString() && status === MessageStatus.pending) {
             await Post.updateOne({ _id: postId }, { $set: { theme, content } });
-            const posts = await this.findPostsBySocket({ author: userId }, { page, per_page });
+            const posts = await this.findPostsBySocket(
+              { author: userId, status: MessageStatus.pending },
+              { page, per_page },
+            );
             socket.emit(SOCKET_EVT.get_pending_posts, { message: posts });
           } else if (post.author?.toString() !== userId?.toString() && !content && !theme) {
             await Post.updateOne({ _id: postId }, { $set: { status } });
-            const posts = await this.findPostsBySocket({ author: userId }, { page, per_page });
+            const posts = await this.findPostsBySocket(
+              { author: userId, status: MessageStatus.pending },
+              { page, per_page },
+            );
             if (status === MessageStatus.public) {
+              const posts = await this.findPostsBySocket(
+                { author: userId, status: MessageStatus.public },
+                { page, per_page },
+              );
               this.getAllSockets().forEach(person => {
                 person.emit(SOCKET_EVT.get_public_posts, { message: posts });
               });
@@ -243,8 +253,15 @@ export class Posts extends Common {
           }
         } else if (role === UsersRoles.superAdmin) {
           await Post.updateOne({ _id: postId }, { $set: { status } });
-          const posts = await this.findPostsBySocket({ author: userId }, { page, per_page });
+          const posts = await this.findPostsBySocket(
+            { author: userId, status: MessageStatus.pending },
+            { page, per_page },
+          );
           if (status === MessageStatus.public) {
+            const posts = await this.findPostsBySocket(
+              { author: userId, status: MessageStatus.public },
+              { page, per_page },
+            );
             this.getAllSockets().forEach(person => {
               person.emit(SOCKET_EVT.get_public_posts, { message: posts });
             });
@@ -317,7 +334,7 @@ export class Posts extends Common {
     const perPage = +pagesOption?.per_page || PER_PAGE;
     const range = page * perPage;
     let posts = await Post.find(options || {}, { __v: false, status: false })
-      .populate({ path: 'author', select: 'login' });
+      .populate({ path: 'author', select: ['login', 'img'] });
     const total_page = Math.ceil(posts.length / perPage);
     posts = posts.reverse().filter((_post: T.IPosts, i: number) => i >= range - perPage && i < range);
     return { posts, total_page, page };
