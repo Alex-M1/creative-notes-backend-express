@@ -27,6 +27,10 @@ const schema = new Schema<IPostsSchema>({
     type: String,
     required: true,
   },
+  isAnonim: {
+    type: Boolean,
+    default: false,
+  },
 }, { collection: 'posts' });
 
 export const Post = model('Posts', schema);

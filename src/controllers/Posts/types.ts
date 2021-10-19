@@ -8,6 +8,7 @@ export interface IPostsSchema {
   theme: string;
   likes: Array<string>;
   created_at: number;
+  isAnonim: boolean;
 }
 
 export interface IPages {
