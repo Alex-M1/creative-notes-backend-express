@@ -68,10 +68,14 @@ export class Posts extends Common {
       if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
       socket.on(SOCKET_EVT.get_private_posts, async ({ page, per_page, theme, author }: T.TPrivatePostsRequest) => {
         if (role === UsersRoles.superAdmin && author) {
-          const posts = await this.findPostsBySocket({ author, theme }, { page, per_page });
+          const posts = await this.findPostsBySocket(
+            { author, theme, status: MessageStatus.private }, { page, per_page },
+          );
           socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
         } else {
-          const posts = await this.findPostsBySocket({ author: userId, theme }, { page, per_page });
+          const posts = await this.findPostsBySocket(
+            { author: userId, theme, status: MessageStatus.private }, { page, per_page },
+          );
           socket.emit(SOCKET_EVT.get_private_posts, { message: posts });
         }
       });
