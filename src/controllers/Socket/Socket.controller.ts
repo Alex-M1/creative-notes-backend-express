@@ -7,6 +7,7 @@ import { ISockets } from './type';
 import { Users } from '../User/User.model';
 import { User } from '../User/User.controller';
 import { Posts } from '../Posts/Posts.controller';
+import { Comments } from '../Сomments/Comments.controller';
 
 let instance: Socket;
 
@@ -33,6 +34,7 @@ export class Socket {
 
   connect = (app: HttpServer): void => {
     const posts = new Posts();
+    const comments = new Comments();
     io = new Server(app, { cors: { origin: '*' } });
     io.on('connection', async (socket) => {
       const { userId, isInvalid, role } = tokenValidationWS(socket);
@@ -52,6 +54,8 @@ export class Socket {
       posts.updatePublicPostsBySocket(socket);
       posts.updatePendingPostsBySockets(socket);
       posts.updatePrivatePostsBySocket(socket);
+      comments.getComments(socket);
+      comments.createComment(socket);
     });
   };
 }

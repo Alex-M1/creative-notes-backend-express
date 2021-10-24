@@ -9,6 +9,7 @@ export interface IPostsSchema {
   likes: Array<string>;
   created_at: number;
   isAnonim: boolean;
+  comments: number;
 }
 
 export interface IPages {

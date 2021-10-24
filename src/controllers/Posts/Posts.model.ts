@@ -31,6 +31,10 @@ const schema = new Schema<IPostsSchema>({
     type: Boolean,
     default: false,
   },
+  comments: {
+    type: Number,
+    default: 0,
+  },
 }, { collection: 'posts' });
 
 export const Post = model('Posts', schema);

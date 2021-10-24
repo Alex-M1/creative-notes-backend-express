@@ -29,4 +29,6 @@ export const SOCKET_EVT = {
   upd_pending_post: 'upd_pending_post',
   upd_private_post: 'upd_private_post',
   create_comment: 'create_comment',
+  post_has_been_update: 'post_has_been_update',
+  get_comments: 'get_comments',
 };
