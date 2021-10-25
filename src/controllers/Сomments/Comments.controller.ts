@@ -13,8 +13,8 @@ export class Comments extends Common {
       socket.on(SOCKET_EVT.create_comment, async ({ content, post }: T.TCreateComment) => {
         const { userId, isInvalid } = tokenValidationWS(socket);
         content = content.trim();
-        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
-        if (!content) return socket.emit(SOCKET_EVT.error, MESSAGES.no_content);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, { message: MESSAGES.un_autorized });
+        if (!content) return socket.emit(SOCKET_EVT.error, { message: MESSAGES.no_content });
         const comment = new CommentModel({
           author: userId,
           content,
@@ -34,6 +34,8 @@ export class Comments extends Common {
 
   getComments(socket: TSocket): void {
     try {
+      const { isInvalid } = tokenValidationWS(socket);
+      if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, { message: MESSAGES.un_autorized });
       socket.on(SOCKET_EVT.get_comments, async ({ post }) => {
         const comments = await CommentModel.find({ post });
         socket.emit(SOCKET_EVT.get_comments, { message: comments });
