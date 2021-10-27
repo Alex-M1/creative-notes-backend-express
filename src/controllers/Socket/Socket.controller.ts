@@ -33,29 +33,35 @@ export class Socket {
   }
 
   connect = (app: HttpServer): void => {
-    const posts = new Posts();
-    const comments = new Comments();
-    io = new Server(app, { cors: { origin: '*' } });
-    io.on('connection', async (socket) => {
-      const { userId, isInvalid, role } = tokenValidationWS(socket);
-      this.sockets[role].push(socket);
+    try {
+      const posts = new Posts();
+      const comments = new Comments();
+      io = new Server(app, { cors: { origin: '*' } });
+      io.on('connection', async (socket) => {
+        const { userId, isInvalid, role } = tokenValidationWS(socket);
+        this.sockets[role].push(socket);
 
-      if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
-      await Users.updateOne({ _id: userId }, { $set: { online: true } });
-      User.getUserData(socket);
-      socket.on('disconnect', async () => {
-        await Users.updateOne({ _id: userId }, { $set: { online: false } });
-        this.sockets[role].splice(this.sockets[role].indexOf(socket), 1);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
+        await Users.updateOne({ _id: userId }, { $set: { online: true } });
+        User.getUserData(socket);
+        socket.on('disconnect', async () => {
+          await Users.updateOne({ _id: userId }, { $set: { online: false } });
+          this.sockets[role].splice(this.sockets[role].indexOf(socket), 1);
+        });
+        posts.createPost(socket);
+        posts.getPublicPostsBySockets(socket);
+        posts.getPendingPostsBySockets(socket);
+        posts.getPrivatePostsBySocket(socket);
+        posts.updatePublicPostsBySocket(socket);
+        posts.updatePendingPostsBySockets(socket);
+        posts.updatePrivatePostsBySocket(socket);
+        comments.getComments(socket);
+        comments.createComment(socket);
+        comments.joinToPostRoom(socket);
+        comments.leaveRoom(socket);
       });
-      posts.createPost(socket);
-      posts.getPublicPostsBySockets(socket);
-      posts.getPendingPostsBySockets(socket);
-      posts.getPrivatePostsBySocket(socket);
-      posts.updatePublicPostsBySocket(socket);
-      posts.updatePendingPostsBySockets(socket);
-      posts.updatePrivatePostsBySocket(socket);
-      comments.getComments(socket);
-      comments.createComment(socket);
-    });
+    } catch (err) {
+      console.log(err);
+    }
   };
 }

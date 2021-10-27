@@ -31,4 +31,6 @@ export const SOCKET_EVT = {
   create_comment: 'create_comment',
   post_has_been_update: 'post_has_been_update',
   get_comments: 'get_comments',
+  join_to_room: 'join_to_room',
+  leave_room: 'leave_room',
 };

@@ -32,13 +32,33 @@ export class Comments extends Common {
     }
   }
 
-  getComments(socket: TSocket): void {
+  getComments(socket: TSocket): any {
     try {
       const { isInvalid } = tokenValidationWS(socket);
       if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, { message: MESSAGES.un_autorized });
       socket.on(SOCKET_EVT.get_comments, async ({ post }) => {
         const comments = await CommentModel.find({ post });
         socket.emit(SOCKET_EVT.get_comments, { message: comments });
+      });
+    } catch { socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err }); }
+  }
+
+  joinToPostRoom(socket: TSocket): any {
+    try {
+      const { isInvalid } = tokenValidationWS(socket);
+      if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, { message: MESSAGES.un_autorized });
+      socket.on(SOCKET_EVT.join_to_room, async ({ room }) => {
+        socket.join(`post_${room}`);
+      });
+    } catch { socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err }); }
+  }
+
+  leaveRoom(socket: TSocket): any {
+    try {
+      const { isInvalid } = tokenValidationWS(socket);
+      if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, { message: MESSAGES.un_autorized });
+      socket.on(SOCKET_EVT.leave_room, async ({ room }) => {
+        socket.leave(`post_${room}`);
       });
     } catch { socket.emit(SOCKET_EVT.error, { message: MESSAGES.abstract_err }); }
   }
