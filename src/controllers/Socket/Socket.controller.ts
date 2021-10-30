@@ -56,7 +56,7 @@ export class Socket {
         posts.updatePendingPostsBySockets(socket);
         posts.updatePrivatePostsBySocket(socket);
         comments.getComments(socket);
-        comments.createComment(socket);
+        comments.createComment(socket, io);
         comments.joinToPostRoom(socket);
         comments.leaveRoom(socket);
       });
