@@ -26,7 +26,11 @@ export interface IPostRequest extends Omit<IPostsSchema, 'author' | 'created_at'
   userRole: TRoles
 }
 
-export type ISocketPost = Omit<IPostsSchema, 'author' | 'created_at'> & IPages;
+export interface ISocketPost extends Omit<IPostsSchema, 'author' | 'created_at'> {
+  postTheme: string;
+  per_page: number;
+  page: number;
+}
 
 export interface IUpdatePostRequest extends IPostRequest {
   postId: Schema.Types.ObjectId;

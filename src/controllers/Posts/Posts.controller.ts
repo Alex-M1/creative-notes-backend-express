@@ -12,13 +12,15 @@ import * as T from './types';
 export class Posts extends Common {
   createPost = (socket: TSocket): void => {
     try {
-      socket.on(SOCKET_EVT.create_post, async ({ theme, status, content, page, per_page, isAnonim }: T.ISocketPost) => {
+      socket.on(SOCKET_EVT.create_post, async (
+        { theme, status, content, page, per_page, isAnonim, postTheme }: T.ISocketPost,
+      ) => {
         const { userId, isInvalid, role } = tokenValidationWS(socket);
         if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, MESSAGES.un_autorized);
         if (!content) return socket.emit(SOCKET_EVT.error, MESSAGES.no_content);
         const checkedStatus = this.checkMessageStatus(role, status);
         const post = new Post({
-          theme,
+          theme: postTheme,
           status: checkedStatus,
           content,
           author: userId,

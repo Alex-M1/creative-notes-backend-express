@@ -26,7 +26,6 @@ export class Comments extends Common {
         await Post.updateOne({ _id: post }, { $inc: { comments: 1 } });
         const comments = await CommentModel.find({ post });
         socket.emit(SOCKET_EVT.post_has_been_update, {});
-        // socket.to(`post_${post}`).emit(SOCKET_EVT.get_comments, { message: comments });
         io.sockets.to(`post_${post}`).emit(SOCKET_EVT.get_comments, { message: comments });
       });
     } catch {

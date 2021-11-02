@@ -53,14 +53,17 @@ export class User extends Common {
     }
   };
 
-  static getUserData = async (socket: TSocket): Promise<void> => {
-    try {
-      const { userId } = tokenValidationWS(socket);
-      const user = await Users.findOne({ _id: userId }, { password: false, __v: false, _id: false });
-      socket.emit(SOCKET_EVT.user_info, { message: user });
-    } catch (e) {
-      socket.emit(SOCKET_EVT.user_info, { message: MESSAGES.abstract_err });
-    }
+  static getUserData = (socket: TSocket): void => {
+    socket.on(SOCKET_EVT.user_info, async () => {
+      try {
+        const { userId, isInvalid } = tokenValidationWS(socket);
+        if (isInvalid) return socket.emit(SOCKET_EVT.check_auth, { message: MESSAGES.un_autorized });
+        const user = await Users.findOne({ _id: userId }, { password: false, __v: false, _id: false });
+        socket.emit(SOCKET_EVT.user_info, { message: user });
+      } catch (e) {
+        socket.emit(SOCKET_EVT.user_info, { message: MESSAGES.abstract_err });
+      }
+    });
   };
 
   changeUserData = async (req: Request, res: Response): Promise<TControllerReturn> => {
